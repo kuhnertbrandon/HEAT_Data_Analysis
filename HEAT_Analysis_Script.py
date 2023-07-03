@@ -442,14 +442,13 @@ class HEAT_Analysis():
 		elif self.indicator == 0:
 			n_path = Ndrive_prefix + 'Alloys\\' + n_suffix
 
-		try:
-			if os.path.exists(n_path):
-				print('\n Serial Already exists on Ndrive, replace by hand IF truly necessary \n Try to avoid this!!!')
-			else:
-				shutil.copytree(self.dirs, n_path)
-				print('\n Backed up to N drive \n')
-		except:
-			print('\n Transfer to N drive had issue')
+	
+		if os.path.exists(n_path):
+			print('\n Serial Already exists on Ndrive, replace by hand IF truly necessary \n Try to avoid this!!!')
+		else:
+			shutil.copytree(self.dirs, n_path)
+			print('\n Backed up to N drive \n')
+		
 
 
 
@@ -498,7 +497,9 @@ def main():
 
 	
 	h.move_to_Ndrive()
-
+	h.close()
+	print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
+	sys.exit()
 
 if __name__ == '__main__':
 	main()
