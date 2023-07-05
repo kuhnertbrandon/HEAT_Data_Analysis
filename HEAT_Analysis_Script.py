@@ -44,6 +44,8 @@ class HEAT_Analysis():
 			self.indicator = 0
 		elif 'CuS' in self.title and 'LM' not in self.title:
 			self.indicator = 1
+		elif 'CUS' in self.title and 'LM' not in self.title:
+			self.indicator =1 
 		elif 'LM' in self.title:
 			self.indicator = 2
 		else:
@@ -141,7 +143,8 @@ class HEAT_Analysis():
 			# Create a rolling average
 			res_raw = bigdf[i]
 			
-			if res_raw.iloc[0] < 0.0 or res_raw.iloc[5]>2000:
+			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
+				j = j + 1
 				continue
 			
 			if self.instrument == 'Benderita':
@@ -163,7 +166,7 @@ class HEAT_Analysis():
 			cycle_100 = compare4['Cycle'].iloc[4]
 
 			
-			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],res_start,cycle_6,cycle_10,cycle_50,cycle_100]],
+			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_6,cycle_10,cycle_50,cycle_100]],
 							   columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
 			limit_df = limit_df.append(row)
 			j = j + 1
@@ -239,7 +242,7 @@ class HEAT_Analysis():
 
 		#### Assign device ID based on the serial number
 		instrument = None
-		print(meta_dict)
+		
 		devid = 'device_id'
 
 		if devid in meta_dict:
@@ -319,7 +322,7 @@ class HEAT_Analysis():
 			res_raw = bigdf[i]
 			res_avg = res_raw.rolling(window=mov_avg).mean()
 			cycle_count = bigdf['Cycle']
-			if res_raw.iloc[0] < 0.0 or res_raw.iloc[2]>2000:
+			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j=j+1 # Open
 				continue
 			
@@ -435,6 +438,8 @@ class HEAT_Analysis():
 		## Find the max value
 		labels = df['Sample']
 		values = df['> 100 ohms']
+		print(labels)
+		print(values)
 		
 		vals_max = max(values)
 		
@@ -443,17 +448,17 @@ class HEAT_Analysis():
 		window_max = np.round((vals_max/round_up),0)*round_up+round_up
 		
 		
-		fig, ax = plt.figure(figsize=(20,10))
+		fig, ax = plt.subplots(figsize=(20,10))
 		num_labels = len(labels)
 		colors = plt.cm.viridis(np.linspace(0,1,num_labels))
 		
-		ax.bar(labels,values,color=colors)
+		plt.bar(labels,values,color=colors)
 		ax.set_ylabel('Cycles at Failure',fontsize=20)
-		ax.set_title(master_title[:-4],fontsize=24)
+		ax.set_title(self.title + ' Failure Plot',fontsize=24)
 		ax.set_ylim(0,window_max)
 		ax.yaxis.grid(which='major',linestyle='--')
-		for i in range(num_labels):
-			ax.text(i,values[i],values[i],ha = 'center')
+		for i,v in enumerate(values):
+			ax.text(i,v,v,ha = 'center')
 		ax.set_yticks(np.arange(0,window_max,step=round_up))
 		
 		
@@ -523,7 +528,7 @@ class HEAT_Analysis():
 		else:
 			print('\n \n Ndrive is not mapped!!!! Data is not backed up')
 		
-		print('\n Starting the Ndrive copy now, grab a coffee or some beer cause this will take a minute \n')
+		print('\n Starting the Ndrive copy now, grab a coffee cause this will take a minute \n')
 
 		n_suffix = self.instrument +'\\'+ self.title
 				
@@ -543,7 +548,10 @@ class HEAT_Analysis():
 			print('\n Backed up to N drive \n')
 		
 
-
+	def end(self):
+		print('Finished!!')
+		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
+		sys.exit()
 
 
 
@@ -590,10 +598,9 @@ def main():
 		print('UNRECOGNIZED Sample')
 
 	
-	h.move_to_Ndrive()
-	h.close()
-	print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
-	sys.exit()
+	#h.move_to_Ndrive()
+	h.end()
+	
 
 if __name__ == '__main__':
 	main()
