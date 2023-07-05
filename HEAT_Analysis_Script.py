@@ -23,7 +23,7 @@ class HEAT_Analysis():
 		self.dirs = None
 		self.start_line = None
 		self.instrument = None
-		self.meta_list = ['device_id','daq_limit_cycles','sample_length']
+		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle']
 		self.master_scatter = None
 		self.bend_list = ['05','06','07']   ### NEED
 		self.instronita_list = ['01','02','03','04']
@@ -31,6 +31,7 @@ class HEAT_Analysis():
 		self.master_df = None
 		self.limit_name = None
 		self.limit_df = None
+		
 
 
 
@@ -60,7 +61,7 @@ class HEAT_Analysis():
 
 		print('\n \n')
 
-		return self.title,self.indicator
+		return self.title, self.indicator
 		
 
 
@@ -122,7 +123,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self):
 
-		limit_df=pd.DataFrame([],columns=['Title','Date','Sample','Physical Positon','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+		limit_df=pd.DataFrame([],columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
 
 
 		title = self.title
@@ -143,6 +144,12 @@ class HEAT_Analysis():
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[5]>2000:
 				continue
 			
+			if self.instrument == 'Benderita':
+				strain = '7mm Bend'
+			else:
+				raw_strain = self.meta_dict['Displacement per Cycle'] / self.meta_dict['Length - Preloaded']
+				strain = np.round(raw_strain,2)*100
+
 
 			compare = bigdf[bigdf[i] > 6].reset_index()
 			compare2 = bigdf[bigdf[i] > 10].reset_index()
@@ -157,7 +164,7 @@ class HEAT_Analysis():
 
 			
 			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],res_start,cycle_6,cycle_10,cycle_50,cycle_100]],
-							   columns=['Title','Date','Sample','Physical Positon','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+							   columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
 			limit_df = limit_df.append(row)
 			j = j + 1
 
@@ -174,19 +181,24 @@ class HEAT_Analysis():
 		if self.indicator == 2:
 			path = npre + 'Liquid_Metal\\'
 			masname = 'LM_master_strain_cycle.csv'
+			old_name = 'old\\LM_master_'
 		else:
 			print('Only have liquid metal master for now')
 
 		self.master_path = path + self.instrument + '\\master\\' 
-		current = self.master_path + 'LM_master_strain_cycle.csv'
+
+		current = self.master_path + mas_name
+		mas_to_folder = self.dirs + mas_name
 
 		master_df_old = pd.read_csv(current)
 
-		master_df_old.to_csv(self.master_path + 'old\\LM_' + self.mini_timestamp + '.csv',index=False)
+		master_df_old.to_csv(self.master_path + old_name + self.mini_timestamp + '.csv',index=False)
 
 		self.master_df = pd.concat([master_df_old,self.limit_df])
 
 		self.master_df.to_csv(current,index=False)
+		#Save to current dirs
+		self.master_df.to_csv(mas_to_folder,index=False)
 
 		print('\n Appending new data to \n' + current + '\n')
 
@@ -255,6 +267,31 @@ class HEAT_Analysis():
 		self.meta_dict = meta_dict
 		self.instrument = instrument
 
+	#def plot_mini_plots(self):
+	### Commented below is to make separate plots
+		# if self.limit_df = None:
+		# 	print('Limit df is not established yet')
+		# else:
+		# 	failure_vals = self.limit_df['> 100 ohms'].values.to_list
+
+		# ## Plot mini_plots as well
+			# figz,axz = plt.figure(figure=(20,15))
+			# mini_plots_path = self.dirs + 'mini_plots\\'
+			# if os.path.exists(mini_plots_path):
+			# 	pass
+			# else:
+			# 	os.makedirs(mini_plots_path)
+
+			# last = failure_vals[j]
+			# axz.plot(cycle_count[:last],res_norm[:last])
+			# axz.xlabel('Cycle Count',fontsize=20)
+			# axz.ylabel('Unit Resistance (Ohms/cm)',fontsize=20)
+			# axz.tick_params(axis='both', which='major', labelsize=20)
+			# axz.tick_params(axis='both', which='minor', labelsize=20)
+			# axz.title(hack_labels[j] + ': Cycle Count vs Unit Resistance',fontsize=24)
+			# axz.ylim((0,100))
+			# figz.savefig(mini_plots_path + '_' + hack_labels[j] + '_' + self.mini_timestamp + '.jpg')
+
 
 	def plot_bigdf_moving_average(self):
 		bigdf = self.bigdf
@@ -268,6 +305,7 @@ class HEAT_Analysis():
 			hack_labels = ['MSW','100D_1','100D_2','MSWS','CPWS','85D_1','85D_2','CPW']
 		else:
 			hack_labels = ['Sample 1','Sample 2','Sample 3','Sample 4','Sample 5','Sample 6','Sample 7','Sample 8']
+			
 	 
 
 
@@ -280,18 +318,30 @@ class HEAT_Analysis():
 			# Create a rolling average
 			res_raw = bigdf[i]
 			res_avg = res_raw.rolling(window=mov_avg).mean()
+			cycle_count = bigdf['Cycle']
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[2]>2000:
 				j=j+1 # Open
 				continue
 			
-			elif self.indicator: 
-				sample_length = 15
-				res_norm = res_raw/((sample_length + sample_length*bigdf['% Displacement'])/10)
-				ax1.plot(bigdf['Cycle'],res_avg,label=hack_labels[j])
-				ax2.plot(bigdf['Cycle'],res_raw,label=hack_labels[j])
-			else:
-				ax1.plot(bigdf['Cycle'],res_avg,label=hack_labels[j])
-				ax2.plot(bigdf['Cycle'],res_raw,label=hack_labels[j])
+
+						
+			elif self.indicator == 0 or self.indicator == 1: 
+				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
+				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
+			else: 
+				try:
+					sample_length = meta_dict['Length - Preloaded']
+				except:
+					sample_length = 15
+					print('Cannot find sample length \n Assuming sample length is 15 \n')
+
+				res_norm = res_raw/((sample_length + bigdf['Displacement (mm)'])/10) ### Need to change
+				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
+				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
+
+
+
+				
 			j=j+1
 
 		if self.indicator == 0:
@@ -315,11 +365,25 @@ class HEAT_Analysis():
 		fig.savefig(self.dirs + self.title + ' Resistance_cycle_plot' + self.timestamp + '.jpg')
 		print('\n Raw cycle plot created')
 
-		
 
 	def save_df_to_parquet(self):
 		df_in = self.bigdf
 		df_in.to_parquet(self.dirs + self.title + '_Reliability_'+ self.timestamp +  '.parquet',engine='pyarrow')
+
+	def read_parquet_file(self,parquet_file):
+		dfp=pd.read_parquet(parquet_file)
+		self.bigdf = dfp 
+		self.title = parquet_file[0:13]
+		self.dirs = self.title +'\\'
+		if 'Hack' in self.title or 'AC' in self.title:
+			self.indicator = 0
+		elif 'CuS' in self.title and 'LM' not in self.title:
+			self.indicator = 1
+		elif 'LM' in self.title:
+			self.indicator = 2
+		print('Read the df from a parquet')
+
+		return self.title,self.dirs
 
 
 
@@ -363,8 +427,37 @@ class HEAT_Analysis():
 		plt.tick_params(axis='both', which='minor', labelsize=20)
 		plt.title('Master Graph w/ Most Recent '+ title_last +' in red',fontsize=24)
 		plt.ylim((0,100))
-		plt.savefig('Master_plot_' + self.mini_timestamp + '.jpg')		
+		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '.jpg')
 
+	def mini_barplot(self):
+		df = self.limit_df
+		
+		## Find the max value
+		labels = df['Sample']
+		values = df['> 100 ohms']
+		
+		vals_max = max(values)
+		
+		
+		round_up = 10000
+		window_max = np.round((vals_max/round_up),0)*round_up+round_up
+		
+		
+		fig, ax = plt.figure(figsize=(20,10))
+		num_labels = len(labels)
+		colors = plt.cm.viridis(np.linspace(0,1,num_labels))
+		
+		ax.bar(labels,values,color=colors)
+		ax.set_ylabel('Cycles at Failure',fontsize=20)
+		ax.set_title(master_title[:-4],fontsize=24)
+		ax.set_ylim(0,window_max)
+		ax.yaxis.grid(which='major',linestyle='--')
+		for i in range(num_labels):
+			ax.text(i,values[i],values[i],ha = 'center')
+		ax.set_yticks(np.arange(0,window_max,step=round_up))
+		
+		
+		fig.savefig(self.dirs +  self.title + '_bar_plot_' + self.mini_timestamp +'.jpg')
 
 
 	def comparison_bar_plot_Hack(self,call_for_comparison):
@@ -474,6 +567,7 @@ def main():
 	h.Meta_data_reader()
 	h.plot_bigdf_moving_average()
 	h.create_limitdf()
+	h.mini_barplot()
 	
 
 	### Here on uses logic to identify file type
