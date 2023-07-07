@@ -472,7 +472,7 @@ class HEAT_Analysis():
 
 	def mini_barplot(self):
 		df = self.limit_df
-		df = ### add ability to not plot
+		#df = ### add ability to not plot
 		
 		## Find the max value
 		labels = df['Sample']
