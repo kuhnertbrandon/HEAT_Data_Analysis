@@ -31,6 +31,7 @@ class HEAT_Analysis():
 		self.master_df = None
 		self.limit_name = None
 		self.limit_df = None
+
 		
 
 
@@ -342,6 +343,7 @@ class HEAT_Analysis():
 
 
 		### Moving Average Plot
+		plt.rcParams['agg.path.chunksize'] = 10000
 		fig, (ax1,ax2) = plt.subplots(2,figsize=(30,20))
 		j = 0
 		for i in daq_list:
@@ -393,6 +395,7 @@ class HEAT_Analysis():
 		ax2.tick_params(axis='both', which='minor', labelsize=20)
 		ax2.set_title(graph_title + 'Raw',fontsize=24)
 		ax2.legend(fancybox=True,framealpha=1,fontsize=20)
+
 		
 		fig.savefig(self.dirs + self.title + ' Resistance_cycle_plot' + self.timestamp + '.jpg')
 		print('\n Raw cycle plot created')
@@ -547,7 +550,7 @@ class HEAT_Analysis():
 		ax1.set_ylim(0,window_max)
 		ax1.yaxis.grid(which='major',linestyle='--')
 		for i,v in enumerate(values_1):
-			ax.text(i,v,v,ha = 'center')
+			ax1.text(i,v,v,ha = 'center')
 		ax1.set_yticks(np.arange(0,window_max,step=round_up))
 		
 		
@@ -557,7 +560,7 @@ class HEAT_Analysis():
 		ax2.set_ylim(0,window_max)
 		ax2.yaxis.grid(which='major',linestyle='--')
 		for i,v in enumerate(values_2):
-			ax.text(i,v,v,ha = 'center')
+			ax2.text(i,v,v,ha = 'center')
 		ax2.set_yticks(np.arange(0,window_max,step=round_up))
 		
 		fig.savefig(self.dirs +  self.title + '_compare_w_average.jpg')
