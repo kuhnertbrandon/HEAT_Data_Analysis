@@ -23,7 +23,7 @@ class HEAT_Analysis():
 		self.dirs = None
 		self.start_line = None
 		self.instrument = None
-		self.meta_list = ['Device ID','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
+		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
 		self.bend_list = ['05','06','07']   ### NEED
 		self.instronita_list = ['01','02','03','04']
@@ -281,7 +281,7 @@ class HEAT_Analysis():
 		#### Assign device ID based on the serial number
 		instrument = None
 		
-		devid = 'Device ID'
+		devid = 'device_id'
 
 		if devid in meta_dict:
 		    value = meta_dict[devid]
@@ -435,7 +435,11 @@ class HEAT_Analysis():
 	def master_scatter_plot(self): 
 		## Grab from N drive
 		df = self.master_df
-		df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
+		try:
+			df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
+		except:
+			pass
+		
 		
 		# ### Move old plots away
 		# old_files = glob.glob(self.master_path + '**.csv')
@@ -486,7 +490,10 @@ class HEAT_Analysis():
 
 	def mini_barplot(self):
 		df = self.limit_df
-		df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
+		try:
+			df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
+		except:
+			pass
 		
 		## Find the max value
 		labels = df['Sample']
@@ -634,7 +641,6 @@ def main():
 	h.create_limitdf()
 	h.mini_barplot()
 
-	indicator = 2
 
 	### Here on uses logic to identify file type
 	if indicator == 0:
