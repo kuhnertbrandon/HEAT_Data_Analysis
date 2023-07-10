@@ -6,6 +6,8 @@ Procedure to Run
     This will get updated at some point
 3. Drop the HEAT_Data_Analysis.py and run using python 
 4. Sit back and enjoy as the plots are made for you
+5. You should not be able to re-run and this will reappend to master
+
 
 
 Outputs
@@ -22,3 +24,7 @@ Liquid Metal
 Features to come
   Window plot for failure moment
   Split for CuS
+
+Matlab Users
+
+Please insert functions into the Matlab folder, this will help us keep track of any scripts ran

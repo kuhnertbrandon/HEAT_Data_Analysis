@@ -23,7 +23,7 @@ class HEAT_Analysis():
 		self.dirs = None
 		self.start_line = None
 		self.instrument = None
-		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
+		self.meta_list = ['Device ID','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
 		self.bend_list = ['05','06','07']   ### NEED
 		self.instronita_list = ['01','02','03','04']
@@ -163,7 +163,7 @@ class HEAT_Analysis():
 			if self.instrument == 'Benderita':
 				strain = '7mm Bend'
 			else:
-				raw_strain = self.meta_dict['Displacement per Cycle'] / self.meta_dict['Length - Preloaded']
+				raw_strain = float(self.meta_dict['Displacement per Cycle']) / float(self.meta_dict['Length - Preloaded'])
 				strain = np.round(raw_strain,2)*100
 
 
@@ -173,16 +173,24 @@ class HEAT_Analysis():
 			compare4 = bigdf[bigdf[i] > 100].reset_index()
 			
 			res_start = bigdf[i].iloc[0]					
-			if len(compare) < 5 or len(compare4) < 5:
-				cycle_6 = 1178 #'Did not Fail'
-				cycle_10 = 1178 #'Did not Fail'
-				cycle_50 = 1178 #'Did not Fail'
-				cycle_100 = 1178 #'Did not Fail'
+			if len(compare) < 5:
+				cycle_6 = 'Did not reach limit'
 			else:
 				cycle_6 = compare['Cycle'].iloc[4]
+
+			if len(compare2) < 5:
+				cycle_10 = 'Did not reach limit'
+			else:
 				cycle_10 = compare2['Cycle'].iloc[4]
+			if len(compare3) < 5:
+				cycle_50 = 'Did not reach limit'
+			else:
 				cycle_50 = compare3['Cycle'].iloc[4]
+			if len(compare4) < 5:
+				cycle_100 = 'Did not reach limit'
+			else:			
 				cycle_100 = compare4['Cycle'].iloc[4]
+				
 
 			
 			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_6,cycle_10,cycle_50,cycle_100]],
@@ -200,7 +208,7 @@ class HEAT_Analysis():
 	def append_limit_df_to_master(self):
 		### Find master csv
 		npre = 'N:\\test_data\\'
-		if self.indicator == 2:
+		if self.indicator == 1:
 			path = npre + 'CuS\\'
 			if self.instrument == 'Instronita':
 				masname = 'CuS_master_strain_cycle.csv'
@@ -220,8 +228,8 @@ class HEAT_Analysis():
 		self.master_path = path + self.instrument + '\\master\\' 
 
 
-		current = self.master_path + mas_name
-		mas_to_folder = self.dirs + mas_name
+		current = self.master_path + masname
+		mas_to_folder = self.dirs + masname
 
 		master_df_old = pd.read_csv(current)
 
@@ -273,7 +281,7 @@ class HEAT_Analysis():
 		#### Assign device ID based on the serial number
 		instrument = None
 		
-		devid = 'device_id'
+		devid = 'Device ID'
 
 		if devid in meta_dict:
 		    value = meta_dict[devid]
@@ -364,7 +372,7 @@ class HEAT_Analysis():
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
 			else: 
 				try:
-					sample_length = float(meta_dict['Displacement per Cycle']) / float(meta_dict['Length - Preloaded'])
+					sample_length = float(meta_dict['Length - Preloaded'])
 				except:
 					sample_length = 15
 					print('Cannot find sample length \n Assuming sample length is 15 \n')
@@ -427,12 +435,15 @@ class HEAT_Analysis():
 	def master_scatter_plot(self): 
 		## Grab from N drive
 		df = self.master_df
+		df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
 		
-		
-		### Move old plots away
-		old_files = glob.glob(self.master_path + '**.csv')
-		for i in old_files:
-			shutil.move(i,self.master_path + 'old\\master_from_' +  + self.mini_timestamp + '.csv')
+		# ### Move old plots away
+		# old_files = glob.glob(self.master_path + '**.csv')
+		# print(old_files)
+		# try
+		# for i in old_files:
+		# 	print(i)
+		# 	shutil.move(i,self.master_path + 'old\\master_from_' +  self.mini_timestamp + '.csv')
 		
 		
 		if self.instrument == 'Instronita':
@@ -475,7 +486,7 @@ class HEAT_Analysis():
 
 	def mini_barplot(self):
 		df = self.limit_df
-		#df = ### add ability to not plot
+		df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
 		
 		## Find the max value
 		labels = df['Sample']
@@ -623,7 +634,7 @@ def main():
 	h.create_limitdf()
 	h.mini_barplot()
 
-	
+	indicator = 2
 
 	### Here on uses logic to identify file type
 	if indicator == 0:
@@ -637,12 +648,12 @@ def main():
 			else:
 				print('\n Not an option! \n ') 
 	elif indicator == 1 :
-		h.append_limit_df_to_master()
-		h.master_scatter()
+		#h.append_limit_df_to_master()
+		#h.master_scatter()
 		print('\n CuS needs more data to have a master plot :( \n')
 	elif indicator == 2:
 		h.append_limit_df_to_master()
-		h.master_scatter()
+		h.master_scatter_plot()
 	else:
 		print('UNRECOGNIZED Sample')
 
