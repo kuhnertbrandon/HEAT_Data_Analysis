@@ -220,7 +220,7 @@ class HEAT_Analysis():
 			if self.instrument == 'Instronita':
 				masname = 'LM_master_strain_cycle.csv'
 			else:
-				print('No LM bend data master yet')
+				print('No bend master yet')
 				return
 				masname = 'name soon'
 			old_name = 'old\\LM_master_'
@@ -421,7 +421,7 @@ class HEAT_Analysis():
 	def read_parquet_file(self,parquet_file):
 		dfp=pd.read_parquet(parquet_file)
 		self.bigdf = dfp 
-		self.title = parquet_file[0:13]
+		self.title = parquet_file[0:13] # Morteza wants 14
 		self.dirs = self.title +'\\'
 		if 'Hack' in self.title or 'AC' in self.title:
 			self.indicator = 0
@@ -433,8 +433,7 @@ class HEAT_Analysis():
 			self.indicator = 2
 		print('Read the df from a parquet')
 
-		return self.title,self.dirs
-
+		return self.title,self.indicator
 
 
 	def master_scatter_plot(self): 
@@ -631,17 +630,20 @@ def main():
 
 	h = HEAT_Analysis()
 
-	title,indicator = h.glob_search_csv()
+	#title,indicator = h.glob_search_csv()
 	## build title
 	fresh_directory = current_direct + title
 
-	h.find_first_row()
+	#h.find_first_row()
 	h.Meta_data_reader()
-	h.move_pngs()
+	#h.move_pngs()
+
+	parquets = glob.glob('**.parquet',recursive=True)
+	title,indcator = h.read_parquet_file(parquets[0])
 
 	### These four things get done in this order no matter what
-	h.create_bigdf()
-	h.save_df_to_parquet()
+	#h.create_bigdf()
+	#h.save_df_to_parquet()
 	h.plot_bigdf_moving_average()
 	h.create_limitdf()
 	h.mini_barplot()
@@ -668,8 +670,8 @@ def main():
 	else:
 		print('UNRECOGNIZED Sample')
 
-	
-	h.move_to_Ndrive()
+	print('No N drive transfer!!')
+	#h.move_to_Ndrive()
 	h.end()
 	
 
