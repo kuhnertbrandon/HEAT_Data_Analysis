@@ -85,10 +85,10 @@ class HEAT_Analysis():
 def main():
 
 	print('\n Move all the two different runs folder into the same directory of this script, should look like this: \n')
-	print('Run1 \n Run2 \n Run_combiner.py')
+	print(' Run1 \n Run2 \n Run_combiner.py \n \n')
 
 	while True:
-		prompt1 = input('Type a unique subset of the first folder name and this will go grab the files based on that \n Only needs to be a few characters')
+		prompt1 = input('Type a unique subset of the first folder name and this will go grab the files based on that \n Only needs to be a few characters \n')
 		run1_in = '**' + prompt1 + '**\\**.csv'
 		run1_files = glob.glob(glob_string,recursive = True)
 		print('\n')
@@ -106,7 +106,7 @@ def main():
 
 
 	while True:
-		prompt1 = input('Type a unique subset of the next folder name and this will go grab the files based on that \n Only needs to be a few characters')
+		prompt1 = input('Type a unique subset of the next folder name and this will go grab the files based on that \n Only needs to be a few characters \n')
 		runN_in = '**' + prompt1 + '**\\**.csv'
 		runN_files = glob.glob(glob_string,recursive = True)
 		print('\n')
@@ -128,4 +128,8 @@ def main():
 
 	save_df_to_parquet()
 	print('\n Move this parquet and one of the MetaData files then run the HEAT_Parquet_Analysis.py script')
+	sys.exit()
 
+
+if __name__ == '__main__':
+	main()
