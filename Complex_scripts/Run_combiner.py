@@ -104,6 +104,7 @@ def main():
 		print('\n')
 		prompt2 = input('Are these the files from the first run? (y) or (n)')
 		if prompt2 == 'y':
+			h.find_first_row(run1_files)
 			h.create_bigdf(run1_files)
 			title = run1_files[0][0:13]
 			break
