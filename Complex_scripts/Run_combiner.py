@@ -74,11 +74,19 @@ class HEAT_Analysis():
 			### At this point you have the raw data and its named, time to move it
 
 		### Keep these loops separate to not mess up work flow
-		self.huge_df = pd.concat([self.huge_df,bigdf])
+		if self.huge_df == None:
+			self.huge_df = pd.concat([self.huge_df,bigdf])
+		else:
+			### add on the cycles
+			cycle_last = self.huge_df['Cycle'].iloc[-1]
+			bigdf['Cycle'] = bigdf['Cycle'] + cycle_last
+			self.huge_df = pd.concat([self.huge_df,bigdf])
+
 
 	def save_df_to_parquet(self,title):
 		df_in = self.huge_df
 		df_in.to_parquet(title + '_Reliability.parquet',engine='pyarrow')
+		print(df_in)
 	
 		
 
