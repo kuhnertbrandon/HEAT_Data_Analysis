@@ -74,7 +74,7 @@ class HEAT_Analysis():
 			### At this point you have the raw data and its named, time to move it
 
 		### Keep these loops separate to not mess up work flow
-		if self.huge_df == None:
+		if self.huge_df.empty == True:
 			self.huge_df = pd.concat([self.huge_df,bigdf])
 		else:
 			### add on the cycles
@@ -86,7 +86,8 @@ class HEAT_Analysis():
 	def save_df_to_parquet(self,title):
 		df_in = self.huge_df
 		df_in.to_parquet(title + '_Reliability.parquet',engine='pyarrow')
-		print(df_in)
+		print(df_in['Cycle'].iloc[-10:-1])
+		return
 	
 		
 
@@ -94,11 +95,11 @@ def main():
 
 	print('\n Move all the two different runs folder into the same directory of this script, should look like this: \n')
 	print(' Run1 \n Run2 \n Run_combiner.py \n \n')
-	h.HEAT_Analysis()
+	h = HEAT_Analysis()
 	while True:
 		prompt1 = input('Type a unique subset of the first folder name and this will go grab the files based on that \n Only needs to be a few characters \n')
 		run1_in = '**' + prompt1 + '**\\**.csv'
-		run1_files = glob.glob(runN_in,recursive = True)
+		run1_files = glob.glob(run1_in,recursive = True)
 		print('\n')
 		print(run1_files)
 		print('\n')
@@ -106,7 +107,7 @@ def main():
 		if prompt2 == 'y':
 			h.find_first_row(run1_files)
 			h.create_bigdf(run1_files)
-			title = run1_files[0][0:13]
+			title = run1_files[0][0:14]
 			break
 		elif prompt2 == 'n':
 			print('Try a different input stirng! \n')
@@ -135,7 +136,7 @@ def main():
 		else:
 			print('Type in an acceptable answer \n')
 
-	h.save_df_to_parquet()
+	h.save_df_to_parquet(title)
 	print('\n Move this parquet and one of the MetaData files then run the HEAT_Parquet_Analysis.py script')
 	sys.exit()
 

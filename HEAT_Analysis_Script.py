@@ -220,7 +220,7 @@ class HEAT_Analysis():
 			if self.instrument == 'Instronita':
 				masname = 'LM_master_strain_cycle.csv'
 			else:
-				print('No LM bend data master yet')
+				print('No bend master yet')
 				return
 				masname = 'name soon'
 			old_name = 'old\\LM_master_'
@@ -284,6 +284,7 @@ class HEAT_Analysis():
 									meta_dict[stuff[0]] = stuff[1]
 
 		#### Assign device ID based on the serial number
+		print(meta_dict)
 		instrument = None
 		
 		devid = 'device_id'
@@ -421,7 +422,7 @@ class HEAT_Analysis():
 	def read_parquet_file(self,parquet_file):
 		dfp=pd.read_parquet(parquet_file)
 		self.bigdf = dfp 
-		self.title = parquet_file[0:13]
+		self.title = parquet_file[0:13] # Morteza wants 14
 		self.dirs = self.title +'\\'
 		if 'Hack' in self.title or 'AC' in self.title:
 			self.indicator = 0
@@ -433,17 +434,21 @@ class HEAT_Analysis():
 			self.indicator = 2
 		print('Read the df from a parquet')
 
-		return self.title,self.dirs
+		self.dirs = self.title +'\\'
+		if os.path.exists(self.dirs):
+			pass
+		else:
+			os.makedirs(self.dirs)
 
+		return self.title,self.indicator
 
 
 	def master_scatter_plot(self): 
 		## Grab from N drive
 		df = self.master_df
-		try:
-			df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
-		except:
-			pass
+		#Skip
+		string_column = '> 100 ohms'
+		df = df[~df[string_column].apply(lambda x: isinstance(x,str))]
 		
 		
 		# ### Move old plots away
@@ -489,18 +494,19 @@ class HEAT_Analysis():
 		plt.ylabel(y_ax_label,fontsize=20)
 		plt.tick_params(axis='both', which='major', labelsize=20)
 		plt.tick_params(axis='both', which='minor', labelsize=20)
-		plt.title('Master Graph w/ Most Recent '+ title_last +' in red',fontsize=24)
+		plt.title('MOA w/ Most Recent '+ title_last +' in red',fontsize=24)
 		plt.ylim((0,100))
 		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '.jpg')
 
 	def mini_barplot(self):
 		df = self.limit_df
-		try:
-			df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
-		except:
-			pass
+		
+		### skips string columns
+		string_column = '> 100 ohms'
+		df = df[~df[string_column].apply(lambda x: isinstance(x,str))]
 		
 		## Find the max value
+		print(df)
 		labels = df['Sample']
 		values = df['> 100 ohms']
 		
@@ -620,7 +626,6 @@ class HEAT_Analysis():
 		print('Finished!!')
 		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
 		sys.exit()
-
 
 
 ######################################################################

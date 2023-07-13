@@ -284,6 +284,7 @@ class HEAT_Analysis():
 									meta_dict[stuff[0]] = stuff[1]
 
 		#### Assign device ID based on the serial number
+		print(meta_dict)
 		instrument = None
 		
 		devid = 'device_id'
@@ -377,7 +378,7 @@ class HEAT_Analysis():
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
 			else: 
 				try:
-					sample_length = float(meta_dict['Length - Preloaded'])
+					sample_length = float(self.meta_dict['Length - Preloaded'])
 				except:
 					sample_length = 15
 					print('Cannot find sample length \n Assuming sample length is 15 \n')
@@ -433,16 +434,21 @@ class HEAT_Analysis():
 			self.indicator = 2
 		print('Read the df from a parquet')
 
+		self.dirs = self.title +'\\'
+		if os.path.exists(self.dirs):
+			pass
+		else:
+			os.makedirs(self.dirs)
+
 		return self.title,self.indicator
 
 
 	def master_scatter_plot(self): 
 		## Grab from N drive
 		df = self.master_df
-		try:
-			df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
-		except:
-			pass
+		#Skip
+		string_column = '> 100 ohms'
+		df = df[~df[string_column].apply(lambda x: isinstance(x,str))]
 		
 		
 		# ### Move old plots away
@@ -488,18 +494,19 @@ class HEAT_Analysis():
 		plt.ylabel(y_ax_label,fontsize=20)
 		plt.tick_params(axis='both', which='major', labelsize=20)
 		plt.tick_params(axis='both', which='minor', labelsize=20)
-		plt.title('Master Graph w/ Most Recent '+ title_last +' in red',fontsize=24)
+		plt.title('MOA w/ Most Recent '+ title_last +' in red',fontsize=24)
 		plt.ylim((0,100))
 		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '.jpg')
 
 	def mini_barplot(self):
 		df = self.limit_df
-		try:
-			df = df[df['> 100 ohms'].str.contains('Did not reach') == False]
-		except:
-			pass
+		
+		### skips string columns
+		string_column = '> 100 ohms'
+		df = df[~df[string_column].apply(lambda x: isinstance(x,str))]
 		
 		## Find the max value
+		print(df)
 		labels = df['Sample']
 		values = df['> 100 ohms']
 		
@@ -632,22 +639,23 @@ def main():
 
 	#title,indicator = h.glob_search_csv()
 	## build title
-	fresh_directory = current_direct + title
+	
 
 	#h.find_first_row()
-	h.Meta_data_reader()
+	
 	#h.move_pngs()
 
 	parquets = glob.glob('**.parquet',recursive=True)
-	title,indcator = h.read_parquet_file(parquets[0])
-
+	title, indicator = h.read_parquet_file(parquets[0])
+	fresh_directory = current_direct + title
+	h.Meta_data_reader()
 	### These four things get done in this order no matter what
 	#h.create_bigdf()
 	#h.save_df_to_parquet()
-	h.plot_bigdf_moving_average()
-	h.create_limitdf()
-	h.mini_barplot()
-
+	#h.plot_bigdf_moving_average()
+	#h.create_limitdf()
+	#h.mini_barplot()
+	
 
 	### Here on uses logic to identify file type
 	if indicator == 0:
@@ -665,7 +673,7 @@ def main():
 		#h.master_scatter()
 		print('\n CuS needs more data to have a master plot :( \n')
 	elif indicator == 2:
-		h.append_limit_df_to_master()
+		#h.append_limit_df_to_master()
 		h.master_scatter_plot()
 	else:
 		print('UNRECOGNIZED Sample')
