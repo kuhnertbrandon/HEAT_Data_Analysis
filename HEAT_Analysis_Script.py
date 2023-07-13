@@ -377,7 +377,7 @@ class HEAT_Analysis():
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
 			else: 
 				try:
-					sample_length = float(meta_dict['Length - Preloaded'])
+					sample_length = float(self.meta_dict['Length - Preloaded'])
 				except:
 					sample_length = 15
 					print('Cannot find sample length \n Assuming sample length is 15 \n')
