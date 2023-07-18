@@ -681,6 +681,8 @@ def main():
 
 	### Here on uses logic to identify file type
 	if indicator == 0:
+		h.append_limit_df_to_master()
+		h.master_scatter()
 		while True:
 			prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
 			if prompt == 's':
