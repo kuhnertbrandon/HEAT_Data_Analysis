@@ -523,7 +523,7 @@ class HEAT_Analysis():
 		plt.tick_params(axis='both', which='minor', labelsize=20)
 		plt.title('MOA w/ Most Recent '+ title_last +' in red',fontsize=24)
 		plt.ylim((0,100))
-		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '_transpoed.jpg')
+		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '_transposed.jpg')
 
 	def mini_barplot(self):
 		df = self.limit_df

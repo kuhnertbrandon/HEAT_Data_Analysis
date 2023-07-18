@@ -172,7 +172,11 @@ class HEAT_Analysis():
 			compare3 = bigdf[bigdf[i] > 50].reset_index()
 			compare4 = bigdf[bigdf[i] > 100].reset_index()
 			
-			res_start = bigdf[i].iloc[0]					
+			res_start = bigdf[i].iloc[0]
+
+			res10p_lim = res_start + res_start * 0.1
+			compare10p = bigdf[bigdf[i] > res10p_lim].reset_index()
+
 			if len(compare) < 5:
 				cycle_6 = 'Did not reach limit'
 			else:
@@ -191,10 +195,14 @@ class HEAT_Analysis():
 			else:			
 				cycle_100 = compare4['Cycle'].iloc[4]
 				
-
+			if len(compare10p) < 5:
+				cycle_res10p = 'Did not reach limit'
+			else:			
+				cycle_res10p = compare10p['Cycle'].iloc[4]
+				
 			
-			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_6,cycle_10,cycle_50,cycle_100]],
-							   columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100]],
+							   columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
 			limit_df = limit_df.append(row)
 			j = j + 1
 
@@ -208,6 +216,14 @@ class HEAT_Analysis():
 	def append_limit_df_to_master(self):
 		### Find master csv
 		npre = 'N:\\test_data\\'
+		if self.indicator == 0:
+			path = npre + 'Alloys\\'
+			if self.instrument == 'Instronita':
+				print('no master for instronita Alloys')
+				return
+			else:
+				masname = 'Hack_bend_master.csv'
+			old_name = 'old\\Hack_master_'
 		if self.indicator == 1:
 			path = npre + 'CuS\\'
 			if self.instrument == 'Instronita':
@@ -498,6 +514,17 @@ class HEAT_Analysis():
 		plt.ylim((0,100))
 		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '.jpg')
 
+		plt.figure(figsize=(20,15))
+		plt.scatter(olddf[y_ax],olddf[x_ax],color='grey')
+		plt.scatter(lastdf[y_ax],lastdf[x_ax],color='red')
+		plt.xlabel(y_ax_label,fontsize=20)
+		plt.ylabel(x_ax_label,fontsize=20)
+		plt.tick_params(axis='both', which='major', labelsize=20)
+		plt.tick_params(axis='both', which='minor', labelsize=20)
+		plt.title('MOA w/ Most Recent '+ title_last +' in red',fontsize=24)
+		plt.ylim((0,100))
+		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '_transposed.jpg')
+
 	def mini_barplot(self):
 		df = self.limit_df
 		
@@ -628,7 +655,6 @@ class HEAT_Analysis():
 		sys.exit()
 
 
-
 ######################################################################
 def main():
 	### Intialize Ndrive folder to save
@@ -669,11 +695,10 @@ def main():
 			else:
 				print('\n Not an option! \n ') 
 	elif indicator == 1 :
-		#h.append_limit_df_to_master()
-		#h.master_scatter()
-		print('\n CuS needs more data to have a master plot :( \n')
+		h.append_limit_df_to_master()
+		h.master_scatter()
 	elif indicator == 2:
-		#h.append_limit_df_to_master()
+		h.append_limit_df_to_master()
 		h.master_scatter_plot()
 	else:
 		print('UNRECOGNIZED Sample')
