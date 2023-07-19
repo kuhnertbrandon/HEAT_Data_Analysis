@@ -464,11 +464,10 @@ class HEAT_Analysis():
 		df = self.master_df
 		#Skip
 		string_column = '> 100 ohms'
-		try:
-			df =df.drop(df[df[string_column].str.contains("not")].index)
-		except:
-			print('No Strings!!')
+		if df[string_column].str.contains('not').any() == False:
 			pass
+		else:
+			df =df.drop(df[df[string_column].str.contains("not")].index)
 		
 		
 		# ### Move old plots away
@@ -534,11 +533,11 @@ class HEAT_Analysis():
 		
 		### skips string columns
 		string_column = '> 100 ohms'
-		try:
-			df =df.drop(df[df[string_column].str.contains("not")].index)
-		except:
-			print('No Strings!!')
+		if df[string_column].str.contains('not').any() == False:
 			pass
+		else:
+			df =df.drop(df[df[string_column].str.contains("not")].index)
+			
 		
 		## Find the max value
 		print(df)
@@ -690,7 +689,7 @@ def main():
 	### Here on uses logic to identify file type
 	if indicator == 0:
 		h.append_limit_df_to_master()
-		h.master_scatter()
+		h.master_scatter_plot()
 		while True:
 			prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
 			if prompt == 's':
