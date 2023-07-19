@@ -464,7 +464,7 @@ class HEAT_Analysis():
 		df = self.master_df
 		#Skip
 		string_column = '> 100 ohms'
-		df = df[~df[string_column].apply(lambda x: isinstance(x,str))]
+		df =df.drop(df[df[string_column].str.contains("not")].index)
 		
 		
 		# ### Move old plots away
@@ -530,7 +530,7 @@ class HEAT_Analysis():
 		
 		### skips string columns
 		string_column = '> 100 ohms'
-		df = df[~df[string_column].apply(lambda x: isinstance(x,str))]
+		df =df.drop(df[df[string_column].str.contains("not")].index)
 		
 		## Find the max value
 		print(df)
