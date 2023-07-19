@@ -468,6 +468,7 @@ class HEAT_Analysis():
 			pass
 		else:
 			df =df.drop(df[df[string_column].str.contains("not",na=False)].index)
+			df[string_column] = pd.to_numeric(df[string_column])
 		
 		
 		# ### Move old plots away
@@ -525,7 +526,6 @@ class HEAT_Analysis():
 		plt.tick_params(axis='both', which='major', labelsize=20)
 		plt.tick_params(axis='both', which='minor', labelsize=20)
 		plt.title('MOA w/ Most Recent '+ title_last +' in red',fontsize=24)
-		plt.ylim((0,100))
 		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '_transposed.jpg')
 
 	def mini_barplot(self):
@@ -537,6 +537,7 @@ class HEAT_Analysis():
 			pass
 		else:
 			df =df.drop(df[df[string_column].str.contains("not",na=False)].index)
+			df[string_column] = pd.to_numeric(df[string_column])
 			
 		
 		## Find the max value
