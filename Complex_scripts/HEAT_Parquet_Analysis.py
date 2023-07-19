@@ -464,7 +464,11 @@ class HEAT_Analysis():
 		df = self.master_df
 		#Skip
 		string_column = '> 100 ohms'
-		df =df.drop(df[df[string_column].str.contains("not")].index)
+		try:
+			df =df.drop(df[df[string_column].str.contains("not")].index)
+		except:
+			print('No Strings!!')
+			pass
 		
 		
 		# ### Move old plots away
@@ -530,7 +534,11 @@ class HEAT_Analysis():
 		
 		### skips string columns
 		string_column = '> 100 ohms'
-		df =df.drop(df[df[string_column].str.contains("not")].index)
+		try:
+			df =df.drop(df[df[string_column].str.contains("not")].index)
+		except:
+			print('No Strings!!')
+			pass
 		
 		## Find the max value
 		print(df)
@@ -704,7 +712,7 @@ def main():
 		print('UNRECOGNIZED Sample')
 
 	print('No N drive transfer!!')
-	#h.move_to_Ndrive()
+	h.move_to_Ndrive()
 	h.end()
 	
 
