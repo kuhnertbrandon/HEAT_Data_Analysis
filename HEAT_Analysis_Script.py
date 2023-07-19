@@ -486,7 +486,7 @@ class HEAT_Analysis():
 			y_ax = 'Strain (%)'
 			y_ax_label = 'Strain % during Cycling'
 		else:
-			print('No master scatter for benderita found!!! Cannont create master scatter plot')
+			print('Strain values for Benderita Master coming soon')
 			return
 
 		title_last = df['Title'].iloc[-1]
@@ -702,7 +702,7 @@ def main():
 				print('\n Not an option! \n ') 
 	elif indicator == 1 :
 		h.append_limit_df_to_master()
-		h.master_scatter()
+		h.master_scatter_plot()
 	elif indicator == 2:
 		h.append_limit_df_to_master()
 		h.master_scatter_plot()
