@@ -467,7 +467,7 @@ class HEAT_Analysis():
 		if df[string_column].str.contains('not').any() == False:
 			pass
 		else:
-			df =df.drop(df[df[string_column].str.contains("not")].index)
+			df =df.drop(df[df[string_column].str.contains("not",na=False)].index)
 		
 		
 		# ### Move old plots away
@@ -536,7 +536,7 @@ class HEAT_Analysis():
 		if df[string_column].str.contains('not').any() == False:
 			pass
 		else:
-			df =df.drop(df[df[string_column].str.contains("not")].index)
+			df =df.drop(df[df[string_column].str.contains("not",na=False)].index)
 			
 		
 		## Find the max value
