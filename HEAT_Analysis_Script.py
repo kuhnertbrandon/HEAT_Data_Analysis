@@ -306,21 +306,21 @@ class HEAT_Analysis():
 		devid = 'device_id'
 
 		if devid in meta_dict:
-		    value = meta_dict[devid]
-		    if any(bend_serial in value for bend_serial in self.bend_list ) == True:
-		        instrument = 'Benderita'
-		        
-		        
+			value = meta_dict[devid]
+			if any(bend_serial in value for bend_serial in self.bend_list ) == True:
+				instrument = 'Benderita'
+				
+				
 		if devid in meta_dict:
-		    value = meta_dict[devid]
-		    if (any(instronita_serial in value for instronita_serial in self.instronita_list )) == True:
-		        if instrument is None:
-		            instrument = 'Instronita'
-		        else:
-		            print('Instrument already assigned to Benderita!!!')
+			value = meta_dict[devid]
+			if (any(instronita_serial in value for instronita_serial in self.instronita_list )) == True:
+				if instrument is None:
+					instrument = 'Instronita'
+				else:
+					print('Instrument already assigned to Benderita!!!')
 
 		if instrument == None:
-		    print('Rogue instrument serial number!!!!')
+			print('Rogue instrument serial number!!!!')
 		
 		# Move to new dirs
 		shutil.move(file,self.dirs + file)
@@ -464,11 +464,17 @@ class HEAT_Analysis():
 		df = self.master_df
 		#Skip
 		string_column = '> 100 ohms'
-		if df[string_column].str.contains('not').any() == False:
+		if pd.api.types.is_numeric_dtype(in_master[string_column]) == True:
 			pass
 		else:
-			df =df.drop(df[df[string_column].str.contains("not",na=False)].index)
-			df[string_column] = pd.to_numeric(df[string_column])
+			if in_master[string_column].str.contains('not').any() == False:
+				print('Unexpected strings in the Master plot, skipping')
+				return
+				pass
+			else:
+				in_master = in_master.drop(in_master[in_master['> 100 ohms'].str.contains('not',na=False)].index)
+				in_master['> 100 ohms'] = pd.to_numeric(in_master['> 100 ohms'])
+				print(in_master.dtypes)
 		
 		
 		# ### Move old plots away
@@ -533,11 +539,17 @@ class HEAT_Analysis():
 		
 		### skips string columns
 		string_column = '> 100 ohms'
-		if df[string_column].str.contains('not').any() == False:
+		if pd.api.types.is_numeric_dtype(in_master[string_column]) == True:
 			pass
 		else:
-			df =df.drop(df[df[string_column].str.contains("not",na=False)].index)
-			df[string_column] = pd.to_numeric(df[string_column])
+			if in_master[string_column].str.contains('not').any() == False:
+				print('Unexpected strings in the Master plot, skipping')
+				return
+				pass
+			else:
+				in_master = in_master.drop(in_master[in_master['> 100 ohms'].str.contains('not',na=False)].index)
+				in_master['> 100 ohms'] = pd.to_numeric(in_master['> 100 ohms'])
+				print(in_master.dtypes)
 			
 		
 		## Find the max value
