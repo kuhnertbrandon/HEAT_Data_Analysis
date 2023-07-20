@@ -138,7 +138,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self):
 
-		limit_df=pd.DataFrame([],columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+		limit_df=pd.DataFrame([],columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
 
 
 		title = self.title
