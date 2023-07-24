@@ -455,6 +455,11 @@ class HEAT_Analysis():
 			pass
 		else:
 			os.makedirs(self.dirs)
+			try:
+				shutil.move(parquet_file,self.dirs + parquet_file)
+			except:
+				print('Could not move parquet file!!!')
+
 
 		return self.title,self.indicator
 
@@ -556,14 +561,10 @@ class HEAT_Analysis():
 		print(df)
 		labels = df['Sample']
 		values = df['> 100 ohms']
-		
-		
 		vals_max = max(values)
-		
 		
 		round_up = 10000
 		window_max = np.round((vals_max/round_up),0)*round_up+round_up
-		
 		
 		fig, ax = plt.subplots(figsize=(20,10))
 		num_labels = len(labels)
@@ -577,7 +578,6 @@ class HEAT_Analysis():
 		for i,v in enumerate(values):
 			ax.text(i,v,v,ha = 'center')
 		ax.set_yticks(np.arange(0,window_max,step=round_up))
-		
 		
 		fig.savefig(self.dirs +  self.title + '_bar_plot_' + self.mini_timestamp +'.jpg')
 
