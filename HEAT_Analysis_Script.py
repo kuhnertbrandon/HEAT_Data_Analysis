@@ -320,14 +320,13 @@ class HEAT_Analysis():
 								if 'system_settings.json' in stuff:
 									for i, s in enumerate(stuff):
 										if word in s:
-											print(i)
 											mini_stuff = stuff[i+1].split(',')
 											meta_dict[word] = mini_stuff[0]
 								else:
 									meta_dict[stuff[0]] = stuff[1]
 
 		#### Assign device ID based on the serial number
-		print(meta_dict)
+		
 		instrument = None
 		
 		devid = 'device_id'
@@ -496,17 +495,17 @@ class HEAT_Analysis():
 		df = self.master_df
 		#Skip
 		string_column = '> 100 ohms'
-		if pd.api.types.is_numeric_dtype(in_master[string_column]) == True:
+		if pd.api.types.is_numeric_dtype(df[string_column]) == True:
 			pass
 		else:
-			if in_master[string_column].str.contains('not').any() == False:
+			if df[string_column].str.contains('not').any() == False:
 				print('Unexpected strings in the Master plot, skipping')
 				return
 				pass
 			else:
-				in_master = in_master.drop(in_master[in_master['> 100 ohms'].str.contains('not',na=False)].index)
-				in_master['> 100 ohms'] = pd.to_numeric(in_master['> 100 ohms'])
-				print(in_master.dtypes)
+				df = df.drop(df[df['> 100 ohms'].str.contains('not',na=False)].index)
+				df['> 100 ohms'] = pd.to_numeric(df['> 100 ohms'])
+				print(df.dtypes)
 		
 		
 		# ### Move old plots away
@@ -571,21 +570,21 @@ class HEAT_Analysis():
 		
 		### skips string columns
 		string_column = '> 100 ohms'
-		if pd.api.types.is_numeric_dtype(in_master[string_column]) == True:
+		if pd.api.types.is_numeric_dtype(df[string_column]) == True:
 			pass
 		else:
-			if in_master[string_column].str.contains('not').any() == False:
+			if df[string_column].str.contains('not').any() == False:
 				print('Unexpected strings in the Master plot, skipping')
 				return
 				pass
 			else:
-				in_master = in_master.drop(in_master[in_master['> 100 ohms'].str.contains('not',na=False)].index)
-				in_master['> 100 ohms'] = pd.to_numeric(in_master['> 100 ohms'])
-				print(in_master.dtypes)
+				df = df.drop(df[df['> 100 ohms'].str.contains('not',na=False)].index)
+				df['> 100 ohms'] = pd.to_numeric(df['> 100 ohms'])
+				
 			
 		
 		## Find the max value
-		print(df)
+		
 		labels = df['Sample']
 		values = df['> 100 ohms']
 		vals_max = max(values)
