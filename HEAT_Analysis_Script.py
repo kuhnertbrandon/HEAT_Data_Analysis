@@ -32,8 +32,6 @@ class HEAT_Analysis():
 		self.limit_name = None
 		self.limit_df = None
 
-		
-
 
 
 	#### Finds all csvs, creates file names, new directory
@@ -138,7 +136,8 @@ class HEAT_Analysis():
 
 	def create_limitdf(self):
 
-		limit_df=pd.DataFrame([],columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+		limit_columns = ['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms','Omars 10 %','Omars 50 %']
+		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
 		title = self.title
@@ -151,6 +150,17 @@ class HEAT_Analysis():
 		
 
 		bigdf = self.bigdf
+		#### Omars Limit work
+		f_100_cycles = bigdf[bigdf['Cycle'] <= 100]
+		tops = pd.DataFrame() ## tops of first 100
+		last = f_100_cycles['Cycle'].iloc[0]
+		for index,row in f_100_cycles.iterrows():
+			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
+				tops = tops.append(row)
+				last = row['Cycle']
+
+
+
 		j=0
 		for i in daq_list:
 			# Create a rolling average
@@ -159,12 +169,19 @@ class HEAT_Analysis():
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j = j + 1
 				continue
-			
+
 			if self.instrument == 'Benderita':
 				strain = '7mm Bend'
 			else:
 				raw_strain = float(self.meta_dict['Displacement per Cycle']) / float(self.meta_dict['Length - Preloaded'])
 				strain = np.round(raw_strain,2)*100
+
+			### Omar's limit
+			omars_start = tops[i].mean()
+			omars_10p = omars_start * 1.1
+			omars_50p = omars_start * 1.5
+			omars_df_10p = bigdf[bigdf[i] > omars_10p].reset_index(drop=True)
+			omars_df_50p = bigdf[bigdf[i] > omars_50p].reset_index(drop=True)
 
 
 			compare = bigdf[bigdf[i] > 6].reset_index()
@@ -199,10 +216,20 @@ class HEAT_Analysis():
 				cycle_res10p = 'Did not reach limit'
 			else:			
 				cycle_res10p = compare10p['Cycle'].iloc[4]
+
+			if len(omars_df_10p) < 5:
+				omars_10p_limit = 'Did not reach limit'
+			else:			
+				omars_10p_limit = omars_df_10p['Cycle'].iloc[4]
+
+			if len(omars_df_50p) < 5:
+				omars_50p_limit = 'Did not reach limit'
+			else:			
+				omars_50p_limit = omars_df_50p['Cycle'].iloc[4]
 				
 			
-			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100]],
-							   columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100,omars_10p_limit,omars_50p_limit]],
+							   columns=limit_columns )
 			limit_df = limit_df.append(row)
 			j = j + 1
 
