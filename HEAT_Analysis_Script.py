@@ -494,17 +494,17 @@ class HEAT_Analysis():
 		## Grab from N drive
 		df = self.master_df
 		#Skip
-		string_column = '> 100 ohms'
-		if pd.api.types.is_numeric_dtype(df[string_column]) == True:
+		column_of_interest = '> 100 ohms'
+		if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 			pass
 		else:
-			if df[string_column].str.contains('not').any() == False:
+			if df[column_of_interest].str.contains('not').any() == False:
 				print('Unexpected strings in the Master plot, skipping')
 				return
 				pass
 			else:
-				df = df.drop(df[df['> 100 ohms'].str.contains('not',na=False)].index)
-				df['> 100 ohms'] = pd.to_numeric(df['> 100 ohms'])
+				df = df.drop(df[df[column_of_interest].str.contains('not',na=False)].index)
+				df[column_of_interest] = pd.to_numeric(df[column_of_interest])
 				print(df.dtypes)
 		
 		
@@ -568,44 +568,45 @@ class HEAT_Analysis():
 	def mini_barplot(self):
 		df = self.limit_df
 		
+
+		y_bars = ['> 100 ohms','10 % increase (ohms)','']
 		### skips string columns
-		string_column = '> 100 ohms'
-		if pd.api.types.is_numeric_dtype(df[string_column]) == True:
-			pass
-		else:
-			if df[string_column].str.contains('not').any() == False:
-				print('Unexpected strings in the Master plot, skipping')
-				return
+		for a in y_bars:
+			column_of_interest = a
+			if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 				pass
 			else:
-				df = df.drop(df[df['> 100 ohms'].str.contains('not',na=False)].index)
-				df['> 100 ohms'] = pd.to_numeric(df['> 100 ohms'])
+				if df[column_of_interest].str.contains('not').any() == False:
+					print('Unexpected strings in the Master plot, skipping')
+					return
+					pass
+				else:
+					df = df.drop(df[df[column_of_interest].str.contains('not',na=False)].index)
+					df[column_of_interest] = pd.to_numeric(df[column_of_interest])
 				
+
+			## Find the max value
+			labels = df['Sample']
+			values = df[column_of_interest]
+			vals_max = max(values)
 			
-		
-		## Find the max value
-		
-		labels = df['Sample']
-		values = df['> 100 ohms']
-		vals_max = max(values)
-		
-		round_up = 10000
-		window_max = np.round((vals_max/round_up),0)*round_up+round_up
-		
-		fig, ax = plt.subplots(figsize=(20,10))
-		num_labels = len(labels)
-		colors = plt.cm.viridis(np.linspace(0,1,num_labels))
-		
-		plt.bar(labels,values,color=colors)
-		ax.set_ylabel('Cycles at Failure',fontsize=20)
-		ax.set_title(self.title + ' Failure Plot',fontsize=24)
-		ax.set_ylim(0,window_max)
-		ax.yaxis.grid(which='major',linestyle='--')
-		for i,v in enumerate(values):
-			ax.text(i,v,v,ha = 'center')
-		ax.set_yticks(np.arange(0,window_max,step=round_up))
-		
-		fig.savefig(self.dirs +  self.title + '_bar_plot_' + self.mini_timestamp +'.jpg')
+			round_up = 10000
+			window_max = np.round((vals_max/round_up),0)*round_up+round_up
+			
+			fig, ax = plt.subplots(figsize=(20,10))
+			num_labels = len(labels)
+			colors = plt.cm.viridis(np.linspace(0,1,num_labels))
+			
+			plt.bar(labels,values,color=colors)
+			ax.set_ylabel('Cycles at Failure',fontsize=20)
+			ax.set_title(self.title + ' Failure Plot',fontsize=24)
+			ax.set_ylim(0,window_max)
+			ax.yaxis.grid(which='major',linestyle='--')
+			for i,v in enumerate(values):
+				ax.text(i,v,v,ha = 'center')
+			ax.set_yticks(np.arange(0,window_max,step=round_up))
+			
+			fig.savefig(self.dirs +  self.title + '_bar_plot_for_'+ a + self.mini_timestamp +'.jpg')
 
 
 	def comparison_bar_plot_Hack(self,call_for_comparison):
