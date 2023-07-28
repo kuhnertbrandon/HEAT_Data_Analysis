@@ -32,8 +32,6 @@ class HEAT_Analysis():
 		self.limit_name = None
 		self.limit_df = None
 
-		
-
 
 
 	#### Finds all csvs, creates file names, new directory
@@ -138,7 +136,8 @@ class HEAT_Analysis():
 
 	def create_limitdf(self):
 
-		limit_df=pd.DataFrame([],columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+		limit_columns = ['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms','Omars 10 %','Omars 50 %']
+		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
 		title = self.title
@@ -151,6 +150,17 @@ class HEAT_Analysis():
 		
 
 		bigdf = self.bigdf
+		#### Omars Limit work
+		f_100_cycles = bigdf[bigdf['Cycle'] <= 100]
+		tops = pd.DataFrame() ## tops of first 100
+		last = f_100_cycles['Cycle'].iloc[0]
+		for index,row in f_100_cycles.iterrows():
+			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
+				tops = tops.append(row)
+				last = row['Cycle']
+
+
+
 		j=0
 		for i in daq_list:
 			# Create a rolling average
@@ -159,12 +169,19 @@ class HEAT_Analysis():
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j = j + 1
 				continue
-			
+
 			if self.instrument == 'Benderita':
 				strain = '7mm Bend'
 			else:
 				raw_strain = float(self.meta_dict['Displacement per Cycle']) / float(self.meta_dict['Length - Preloaded'])
 				strain = np.round(raw_strain,2)*100
+
+			### Omar's limit
+			omars_start = tops[i].mean()
+			omars_10p = omars_start * 1.1
+			omars_50p = omars_start * 1.5
+			omars_df_10p = bigdf[bigdf[i] > omars_10p].reset_index(drop=True)
+			omars_df_50p = bigdf[bigdf[i] > omars_50p].reset_index(drop=True)
 
 
 			compare = bigdf[bigdf[i] > 6].reset_index()
@@ -199,10 +216,20 @@ class HEAT_Analysis():
 				cycle_res10p = 'Did not reach limit'
 			else:			
 				cycle_res10p = compare10p['Cycle'].iloc[4]
+
+			if len(omars_df_10p) < 5:
+				omars_10p_limit = 'Did not reach limit'
+			else:			
+				omars_10p_limit = omars_df_10p['Cycle'].iloc[4]
+
+			if len(omars_df_50p) < 5:
+				omars_50p_limit = 'Did not reach limit'
+			else:			
+				omars_50p_limit = omars_df_50p['Cycle'].iloc[4]
 				
 			
-			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100]],
-							   columns=['Title','Date','Sample','Physical Positon','Strain (%)','Start (ohms)','10 % increase (ohms)','> 6 ohms','> 10 ohms','> 50 ohms','> 100 ohms'])
+			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100,omars_10p_limit,omars_50p_limit]],
+							   columns=limit_columns )
 			limit_df = limit_df.append(row)
 			j = j + 1
 
@@ -293,34 +320,33 @@ class HEAT_Analysis():
 								if 'system_settings.json' in stuff:
 									for i, s in enumerate(stuff):
 										if word in s:
-											print(i)
 											mini_stuff = stuff[i+1].split(',')
 											meta_dict[word] = mini_stuff[0]
 								else:
 									meta_dict[stuff[0]] = stuff[1]
 
 		#### Assign device ID based on the serial number
-		print(meta_dict)
+		
 		instrument = None
 		
 		devid = 'device_id'
 
 		if devid in meta_dict:
-		    value = meta_dict[devid]
-		    if any(bend_serial in value for bend_serial in self.bend_list ) == True:
-		        instrument = 'Benderita'
-		        
-		        
+			value = meta_dict[devid]
+			if any(bend_serial in value for bend_serial in self.bend_list ) == True:
+				instrument = 'Benderita'
+				
+				
 		if devid in meta_dict:
-		    value = meta_dict[devid]
-		    if (any(instronita_serial in value for instronita_serial in self.instronita_list )) == True:
-		        if instrument is None:
-		            instrument = 'Instronita'
-		        else:
-		            print('Instrument already assigned to Benderita!!!')
+			value = meta_dict[devid]
+			if (any(instronita_serial in value for instronita_serial in self.instronita_list )) == True:
+				if instrument is None:
+					instrument = 'Instronita'
+				else:
+					print('Instrument already assigned to Benderita!!!')
 
 		if instrument == None:
-		    print('Rogue instrument serial number!!!!')
+			print('Rogue instrument serial number!!!!')
 		
 		# Move to new dirs
 		shutil.move(file,self.dirs + file)
@@ -455,6 +481,11 @@ class HEAT_Analysis():
 			pass
 		else:
 			os.makedirs(self.dirs)
+			try:
+				shutil.move(parquet_file,self.dirs + parquet_file)
+			except:
+				print('Could not move parquet file!!!')
+
 
 		return self.title,self.indicator
 
@@ -464,11 +495,17 @@ class HEAT_Analysis():
 		df = self.master_df
 		#Skip
 		string_column = '> 100 ohms'
-		try:
-			df =df.drop(df[df[string_column].str.contains("not")].index)
-		except:
-			print('No Strings!!')
+		if pd.api.types.is_numeric_dtype(df[string_column]) == True:
 			pass
+		else:
+			if df[string_column].str.contains('not').any() == False:
+				print('Unexpected strings in the Master plot, skipping')
+				return
+				pass
+			else:
+				df = df.drop(df[df['> 100 ohms'].str.contains('not',na=False)].index)
+				df['> 100 ohms'] = pd.to_numeric(df['> 100 ohms'])
+				print(df.dtypes)
 		
 		
 		# ### Move old plots away
@@ -486,7 +523,7 @@ class HEAT_Analysis():
 			y_ax = 'Strain (%)'
 			y_ax_label = 'Strain % during Cycling'
 		else:
-			print('No master scatter for benderita found!!! Cannont create master scatter plot')
+			print('Strain values for Benderita Master coming soon')
 			return
 
 		title_last = df['Title'].iloc[-1]
@@ -526,7 +563,6 @@ class HEAT_Analysis():
 		plt.tick_params(axis='both', which='major', labelsize=20)
 		plt.tick_params(axis='both', which='minor', labelsize=20)
 		plt.title('MOA w/ Most Recent '+ title_last +' in red',fontsize=24)
-		plt.ylim((0,100))
 		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '_transposed.jpg')
 
 	def mini_barplot(self):
@@ -534,24 +570,27 @@ class HEAT_Analysis():
 		
 		### skips string columns
 		string_column = '> 100 ohms'
-		try:
-			df =df.drop(df[df[string_column].str.contains("not")].index)
-		except:
-			print('No Strings!!')
+		if pd.api.types.is_numeric_dtype(df[string_column]) == True:
 			pass
+		else:
+			if df[string_column].str.contains('not').any() == False:
+				print('Unexpected strings in the Master plot, skipping')
+				return
+				pass
+			else:
+				df = df.drop(df[df['> 100 ohms'].str.contains('not',na=False)].index)
+				df['> 100 ohms'] = pd.to_numeric(df['> 100 ohms'])
+				
+			
 		
 		## Find the max value
-		print(df)
+		
 		labels = df['Sample']
 		values = df['> 100 ohms']
-		
-		
 		vals_max = max(values)
-		
 		
 		round_up = 10000
 		window_max = np.round((vals_max/round_up),0)*round_up+round_up
-		
 		
 		fig, ax = plt.subplots(figsize=(20,10))
 		num_labels = len(labels)
@@ -565,7 +604,6 @@ class HEAT_Analysis():
 		for i,v in enumerate(values):
 			ax.text(i,v,v,ha = 'center')
 		ax.set_yticks(np.arange(0,window_max,step=round_up))
-		
 		
 		fig.savefig(self.dirs +  self.title + '_bar_plot_' + self.mini_timestamp +'.jpg')
 
@@ -686,9 +724,9 @@ def main():
 	### These four things get done in this order no matter what
 	#h.create_bigdf()
 	#h.save_df_to_parquet()
-	#h.plot_bigdf_moving_average()
-	#h.create_limitdf()
-	#h.mini_barplot()
+	h.plot_bigdf_moving_average()
+	h.create_limitdf()
+	h.mini_barplot()
 	
 
 	### Here on uses logic to identify file type
