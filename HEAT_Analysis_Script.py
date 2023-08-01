@@ -569,7 +569,7 @@ class HEAT_Analysis():
 		df = self.limit_df
 		
 
-		y_bars = ['> 100 ohms','10 % increase (ohms)','']
+		y_bars = ['> 100 ohms','10 % increase (ohms)']
 		### skips string columns
 		for a in y_bars:
 			column_of_interest = a
@@ -605,8 +605,13 @@ class HEAT_Analysis():
 			for i,v in enumerate(values):
 				ax.text(i,v,v,ha = 'center')
 			ax.set_yticks(np.arange(0,window_max,step=round_up))
+
+			if a == '> 100 ohms':
+				a_name = '100ohms_'
+			elif a == '10 % increase (ohms)':
+				a_name = '10_per_increase_'
 			
-			fig.savefig(self.dirs +  self.title + '_bar_plot_for_'+ a + self.mini_timestamp +'.jpg')
+			fig.savefig(self.dirs +  self.title + '_bar_plot_for_'+ a_name + self.mini_timestamp +'.jpg')
 
 
 	def comparison_bar_plot_Hack(self,call_for_comparison):
