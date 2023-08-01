@@ -251,7 +251,7 @@ class HEAT_Analysis():
 			else:
 				masname = 'Hack_bend_master.csv'
 			old_name = 'old\\Hack_master_'
-		if self.indicator == 1:
+		elif self.indicator == 1:
 			path = npre + 'CuS\\'
 			if self.instrument == 'Instronita':
 				masname = 'CuS_master_strain_cycle.csv'
