@@ -418,7 +418,7 @@ class HEAT_Analysis():
 			elif self.indicator == 0 or self.indicator == 1: 
 				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
-			else: 
+			elif self.indicator == 2 and self.instrument == 'Instronita': 
 				try:
 					sample_length = float(self.meta_dict['Length - Preloaded'])
 				except:
@@ -428,6 +428,9 @@ class HEAT_Analysis():
 				res_norm = res_raw/((sample_length + bigdf['Displacement (mm)'])/10) ### Need to change
 				ax1.plot(cycle_count,res_norm,label=hack_labels[j])
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
+			elif self.indicator == 2 and self.instrument == 'Benderita':
+				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
+				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
 
 
 
@@ -435,6 +438,8 @@ class HEAT_Analysis():
 			j=j+1
 
 		if self.indicator == 0 or self.indicator ==1:
+			axy = 'Resistance (Ohms)'
+		elif self.instrument =='Benderita':
 			axy = 'Resistance (Ohms)'
 		else:
 			axy = 'Unit Resistance (Ohms/cm)'
