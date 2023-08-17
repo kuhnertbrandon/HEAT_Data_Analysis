@@ -246,7 +246,7 @@ class HEAT_Analysis():
 		if self.indicator == 0:
 			path = npre + 'Alloys\\'
 			if self.instrument == 'Instronita':
-				print('no master for instronita Alloys')
+				print('\n \n no master for instronita Alloys \n \n ')
 				return
 			else:
 				masname = 'Hack_bend_master.csv'
@@ -263,9 +263,7 @@ class HEAT_Analysis():
 			if self.instrument == 'Instronita':
 				masname = 'LM_master_strain_cycle.csv'
 			else:
-				print('No bend master yet')
-				return
-				masname = 'name soon'
+				masname = 'LM_bend_master.csv'
 			old_name = 'old\\LM_master_'
 		else:
 			print('No indicator assigned at append to master function')
@@ -497,8 +495,22 @@ class HEAT_Analysis():
 
 	def master_scatter_plot(self): 
 		## Grab from N drive
-		df = self.master_df
+		if self.master_df is None:
+			print('No Master available')
+			return
+		else:
+			df = self.master_df
 		#Skip
+
+		if self.instrument == 'Instronita':
+			x_ax = '> 100 ohms'
+			x_ax_label = 'Cycle Count'
+			y_ax = 'Strain (%)'
+			y_ax_label = 'Strain % during Cycling'
+		else:
+			print('Strain values for Benderita Master coming soon')
+			return
+
 		column_of_interest = '> 100 ohms'
 		if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 			pass
@@ -522,15 +534,7 @@ class HEAT_Analysis():
 		# 	shutil.move(i,self.master_path + 'old\\master_from_' +  self.mini_timestamp + '.csv')
 		
 		
-		if self.instrument == 'Instronita':
-			x_ax = '> 100 ohms'
-			x_ax_label = 'Cycle Count'
-			y_ax = 'Strain (%)'
-			y_ax_label = 'Strain % during Cycling'
-		else:
-			print('Strain values for Benderita Master coming soon')
-			return
-
+	
 		title_last = df['Title'].iloc[-1]
 
 		lastdf = df[df['Title'] == title_last]
