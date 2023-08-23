@@ -25,7 +25,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07']   ### NEED
+		self.bend_list = ['05','06','07','08','09']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -581,7 +581,7 @@ class HEAT_Analysis():
 					return
 					pass
 				else:
-					df = df.drop(df[df[column_of_interest].str.contains('not',na=False)].index)
+					df = df.drop(df[df[column_of_interest].str.contains('Did not',na=False)].index)
 					df[column_of_interest] = pd.to_numeric(df[column_of_interest])
 				
 

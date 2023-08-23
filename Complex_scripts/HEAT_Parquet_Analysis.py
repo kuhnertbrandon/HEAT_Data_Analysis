@@ -25,7 +25,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07']   ### NEED
+		self.bend_list = ['05','06','07','08','09']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -236,8 +236,9 @@ class HEAT_Analysis():
 		# save Limit df
 		limit_name =self.title + '_limits.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
+		print(limit_df)
 		
-		self.limit_name
+		self.limit_name = limit_name
 		self.limit_df = limit_df
 
 	def append_limit_df_to_master(self):
@@ -572,6 +573,7 @@ class HEAT_Analysis():
 		y_bars = ['> 100 ohms','10 % increase (ohms)']
 		### skips string columns
 		for a in y_bars:
+			print(df)
 			column_of_interest = a
 			if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 				pass
@@ -579,15 +581,16 @@ class HEAT_Analysis():
 				if df[column_of_interest].str.contains('not').any() == False:
 					print('Unexpected strings in the Master plot, skipping')
 					return
-					pass
 				else:
-					df = df.drop(df[df[column_of_interest].str.contains('not',na=False)].index)
+					df = df.drop(df[df[column_of_interest].str.contains('Did not',na=False)].index)
 					df[column_of_interest] = pd.to_numeric(df[column_of_interest])
 				
 
 			## Find the max value
 			labels = df['Sample']
 			values = df[column_of_interest]
+			if len(values) < 1:
+				return
 			vals_max = max(values)
 			
 			round_up = 10000
@@ -749,14 +752,14 @@ def main():
 				print('\n Not an option! \n ') 
 	elif indicator == 1 :
 		h.append_limit_df_to_master()
-		h.master_scatter()
+		h.master_scatter_plot()
 	elif indicator == 2:
 		h.append_limit_df_to_master()
 		h.master_scatter_plot()
 	else:
 		print('UNRECOGNIZED Sample')
 
-	print('No N drive transfer!!')
+	#print('No N drive transfer!!')
 	h.move_to_Ndrive()
 	h.end()
 	
