@@ -246,7 +246,7 @@ class HEAT_Analysis():
 		if self.indicator == 0:
 			path = npre + 'Alloys\\'
 			if self.instrument == 'Instronita':
-				print('no master for instronita Alloys')
+				print('\n \n no master for instronita Alloys \n \n ')
 				return
 			else:
 				masname = 'Hack_bend_master.csv'
@@ -263,9 +263,7 @@ class HEAT_Analysis():
 			if self.instrument == 'Instronita':
 				masname = 'LM_master_strain_cycle.csv'
 			else:
-				print('No bend master yet')
-				return
-				masname = 'name soon'
+				masname = 'LM_bend_master.csv'
 			old_name = 'old\\LM_master_'
 		else:
 			print('No indicator assigned at append to master function')
@@ -418,7 +416,7 @@ class HEAT_Analysis():
 			elif self.indicator == 0 or self.indicator == 1: 
 				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
-			else: 
+			elif self.indicator == 2 and self.instrument == 'Instronita': 
 				try:
 					sample_length = float(self.meta_dict['Length - Preloaded'])
 				except:
@@ -428,6 +426,9 @@ class HEAT_Analysis():
 				res_norm = res_raw/((sample_length + bigdf['Displacement (mm)'])/10) ### Need to change
 				ax1.plot(cycle_count,res_norm,label=hack_labels[j])
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
+			elif self.indicator == 2 and self.instrument == 'Benderita':
+				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
+				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
 
 
 
@@ -435,6 +436,8 @@ class HEAT_Analysis():
 			j=j+1
 
 		if self.indicator == 0 or self.indicator ==1:
+			axy = 'Resistance (Ohms)'
+		elif self.instrument =='Benderita':
 			axy = 'Resistance (Ohms)'
 		else:
 			axy = 'Unit Resistance (Ohms/cm)'
@@ -492,8 +495,22 @@ class HEAT_Analysis():
 
 	def master_scatter_plot(self): 
 		## Grab from N drive
-		df = self.master_df
+		if self.master_df is None:
+			print('No Master available')
+			return
+		else:
+			df = self.master_df
 		#Skip
+
+		if self.instrument == 'Instronita':
+			x_ax = '> 100 ohms'
+			x_ax_label = 'Cycle Count'
+			y_ax = 'Strain (%)'
+			y_ax_label = 'Strain % during Cycling'
+		else:
+			print('Strain values for Benderita Master coming soon')
+			return
+
 		column_of_interest = '> 100 ohms'
 		if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 			pass
@@ -517,15 +534,7 @@ class HEAT_Analysis():
 		# 	shutil.move(i,self.master_path + 'old\\master_from_' +  self.mini_timestamp + '.csv')
 		
 		
-		if self.instrument == 'Instronita':
-			x_ax = '> 100 ohms'
-			x_ax_label = 'Cycle Count'
-			y_ax = 'Strain (%)'
-			y_ax_label = 'Strain % during Cycling'
-		else:
-			print('Strain values for Benderita Master coming soon')
-			return
-
+	
 		title_last = df['Title'].iloc[-1]
 
 		lastdf = df[df['Title'] == title_last]
