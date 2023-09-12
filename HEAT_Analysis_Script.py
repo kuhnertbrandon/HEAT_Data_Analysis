@@ -616,7 +616,10 @@ class HEAT_Analysis():
 			## Find the max value
 			labels = df['Sample']
 			values = df[column_of_interest]
-			vals_max = max(values)
+			try:
+				vals_max = max(values)
+			except:
+				return
 			
 			round_up = 10000
 			window_max = np.round((vals_max/round_up),0)*round_up+round_up
