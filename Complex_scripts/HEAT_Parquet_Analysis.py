@@ -47,6 +47,8 @@ class HEAT_Analysis():
 			self.indicator =1 
 		elif 'LM' in self.title:
 			self.indicator = 2
+		elif 'ADEBS35' in self.title:
+			self.indicator = 3
 		else:
 			print('\n UNRECOGNIZED SERIAL \n PLS FIX')
 			sys.exit()
@@ -159,12 +161,16 @@ class HEAT_Analysis():
 				tops = tops.append(row)
 				last = row['Cycle']
 
+		#shrink the df
+		small_list = ['Cycle'] + daq_list
+		smoldf = bigdf[small_list].copy()
+		bigdf = None
 
 
 		j=0
 		for i in daq_list:
 			# Create a rolling average
-			res_raw = bigdf[i]
+			res_raw = smoldf[i]
 			
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j = j + 1
@@ -179,53 +185,66 @@ class HEAT_Analysis():
 			### Omar's limit
 			omars_start = tops[i].mean()
 			omars_10p = omars_start * 1.1
-			omars_50p = omars_start * 1.5
-			omars_df_10p = bigdf[bigdf[i] > omars_10p].reset_index(drop=True)
-			omars_df_50p = bigdf[bigdf[i] > omars_50p].reset_index(drop=True)
+			omars_50p = omars_start * 1.5	
 
-
-			compare = bigdf[bigdf[i] > 6].reset_index()
-			compare2 = bigdf[bigdf[i] > 10].reset_index()
-			compare3 = bigdf[bigdf[i] > 50].reset_index()
-			compare4 = bigdf[bigdf[i] > 100].reset_index()
 			
-			res_start = bigdf[i].iloc[0]
+			
+			
+			
+			
+			res_start = smoldf[i].iloc[0]
 
 			res10p_lim = res_start + res_start * 0.1
-			compare10p = bigdf[bigdf[i] > res10p_lim].reset_index()
-
+			
+			
+			compare = smoldf[smoldf[i] > 6].reset_index()
 			if len(compare) < 5:
 				cycle_6 = 'Did not reach limit'
 			else:
 				cycle_6 = compare['Cycle'].iloc[4]
+			compare	= None
 
+			compare2 = smoldf[smoldf[i] > 10].reset_index()
 			if len(compare2) < 5:
 				cycle_10 = 'Did not reach limit'
 			else:
 				cycle_10 = compare2['Cycle'].iloc[4]
+			compare2 = None
+
+			compare3 = smoldf[smoldf[i] > 50].reset_index()
 			if len(compare3) < 5:
 				cycle_50 = 'Did not reach limit'
 			else:
 				cycle_50 = compare3['Cycle'].iloc[4]
+			compare3 = None
+
+			compare4 = smoldf[smoldf[i] > 100].reset_index()
 			if len(compare4) < 5:
 				cycle_100 = 'Did not reach limit'
 			else:			
 				cycle_100 = compare4['Cycle'].iloc[4]
+			compare4 = None
 				
+			compare10p = smoldf[smoldf[i] > res10p_lim].reset_index()
 			if len(compare10p) < 5:
 				cycle_res10p = 'Did not reach limit'
 			else:			
 				cycle_res10p = compare10p['Cycle'].iloc[4]
+			compare10p = None
 
+			omars_df_10p = smoldf[smoldf[i] > omars_10p].reset_index(drop=True)
 			if len(omars_df_10p) < 5:
 				omars_10p_limit = 'Did not reach limit'
 			else:			
 				omars_10p_limit = omars_df_10p['Cycle'].iloc[4]
+			omars_df_10p = None
 
+			omars_df_50p = smoldf[smoldf[i] > omars_50p].reset_index(drop=True)
 			if len(omars_df_50p) < 5:
 				omars_50p_limit = 'Did not reach limit'
 			else:			
 				omars_50p_limit = omars_df_50p['Cycle'].iloc[4]
+			omars_df_50p = None
 				
 			
 			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100,omars_10p_limit,omars_50p_limit]],
@@ -236,9 +255,9 @@ class HEAT_Analysis():
 		# save Limit df
 		limit_name =self.title + '_limits.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
-		print(limit_df)
 		
 		self.limit_name = limit_name
+		
 		self.limit_df = limit_df
 
 	def append_limit_df_to_master(self):
@@ -247,12 +266,12 @@ class HEAT_Analysis():
 		if self.indicator == 0:
 			path = npre + 'Alloys\\'
 			if self.instrument == 'Instronita':
-				print('no master for instronita Alloys')
+				print('\n \n no master for instronita Alloys \n \n ')
 				return
 			else:
 				masname = 'Hack_bend_master.csv'
 			old_name = 'old\\Hack_master_'
-		if self.indicator == 1:
+		elif self.indicator == 1:
 			path = npre + 'CuS\\'
 			if self.instrument == 'Instronita':
 				masname = 'CuS_master_strain_cycle.csv'
@@ -264,9 +283,7 @@ class HEAT_Analysis():
 			if self.instrument == 'Instronita':
 				masname = 'LM_master_strain_cycle.csv'
 			else:
-				print('No bend master yet')
-				return
-				masname = 'name soon'
+				masname = 'LM_bend_master.csv'
 			old_name = 'old\\LM_master_'
 		else:
 			print('No indicator assigned at append to master function')
@@ -416,10 +433,10 @@ class HEAT_Analysis():
 			
 
 						
-			elif self.indicator == 0 or self.indicator == 1: 
+			elif self.indicator == 0 or self.indicator == 1 or self.indicator == 3: 
 				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
-			else: 
+			elif self.indicator == 2 and self.instrument == 'Instronita': 
 				try:
 					sample_length = float(self.meta_dict['Length - Preloaded'])
 				except:
@@ -429,6 +446,9 @@ class HEAT_Analysis():
 				res_norm = res_raw/((sample_length + bigdf['Displacement (mm)'])/10) ### Need to change
 				ax1.plot(cycle_count,res_norm,label=hack_labels[j])
 				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
+			elif self.indicator == 2 and self.instrument == 'Benderita':
+				ax1.plot(cycle_count,res_avg,label=hack_labels[j])
+				ax2.plot(cycle_count,res_raw,label=hack_labels[j])
 
 
 
@@ -436,6 +456,8 @@ class HEAT_Analysis():
 			j=j+1
 
 		if self.indicator == 0 or self.indicator ==1:
+			axy = 'Resistance (Ohms)'
+		elif self.instrument =='Benderita':
 			axy = 'Resistance (Ohms)'
 		else:
 			axy = 'Unit Resistance (Ohms/cm)'
@@ -493,8 +515,22 @@ class HEAT_Analysis():
 
 	def master_scatter_plot(self): 
 		## Grab from N drive
-		df = self.master_df
+		if self.master_df is None:
+			print('No Master available')
+			return
+		else:
+			df = self.master_df
 		#Skip
+
+		if self.instrument == 'Instronita':
+			x_ax = '> 100 ohms'
+			x_ax_label = 'Cycle Count'
+			y_ax = 'Strain (%)'
+			y_ax_label = 'Strain % during Cycling'
+		else:
+			print('Strain values for Benderita Master coming soon')
+			return
+
 		column_of_interest = '> 100 ohms'
 		if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 			pass
@@ -518,15 +554,7 @@ class HEAT_Analysis():
 		# 	shutil.move(i,self.master_path + 'old\\master_from_' +  self.mini_timestamp + '.csv')
 		
 		
-		if self.instrument == 'Instronita':
-			x_ax = '> 100 ohms'
-			x_ax_label = 'Cycle Count'
-			y_ax = 'Strain (%)'
-			y_ax_label = 'Strain % during Cycling'
-		else:
-			print('Strain values for Benderita Master coming soon')
-			return
-
+	
 		title_last = df['Title'].iloc[-1]
 
 		lastdf = df[df['Title'] == title_last]
@@ -567,13 +595,11 @@ class HEAT_Analysis():
 		plt.savefig(self.dirs + 'Master_plot_' + self.mini_timestamp + '_transposed.jpg')
 
 	def mini_barplot(self):
-		df = self.limit_df
-		
 
 		y_bars = ['> 100 ohms','10 % increase (ohms)']
 		### skips string columns
 		for a in y_bars:
-			print(df)
+			df = self.limit_df
 			column_of_interest = a
 			if pd.api.types.is_numeric_dtype(df[column_of_interest]) == True:
 				pass
@@ -581,6 +607,7 @@ class HEAT_Analysis():
 				if df[column_of_interest].str.contains('not').any() == False:
 					print('Unexpected strings in the Master plot, skipping')
 					return
+					pass
 				else:
 					df = df.drop(df[df[column_of_interest].str.contains('Did not',na=False)].index)
 					df[column_of_interest] = pd.to_numeric(df[column_of_interest])
@@ -589,8 +616,6 @@ class HEAT_Analysis():
 			## Find the max value
 			labels = df['Sample']
 			values = df[column_of_interest]
-			if len(values) < 1:
-				return
 			vals_max = max(values)
 			
 			round_up = 10000
@@ -708,7 +733,6 @@ class HEAT_Analysis():
 		print('Finished!!')
 		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
 		sys.exit()
-
 
 
 ######################################################################
