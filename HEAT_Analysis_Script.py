@@ -666,9 +666,11 @@ class HEAT_Analysis():
 		
 		labels_2 = new_df['Sample']
 		values_2 = new_df['> 100 ohms']
-		
-		max_1 = max(values_1)
-		max_2 = max(values_2)
+		try:
+			max_1 = max(values_1)
+			max_2 = max(values_2)
+		except:
+			return
 		
 		if max_1 > max_2:
 			vals_max = max_1
