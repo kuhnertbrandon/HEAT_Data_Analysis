@@ -158,7 +158,7 @@ class HEAT_Analysis():
 		last = f_100_cycles['Cycle'].iloc[0]
 		for index,row in f_100_cycles.iterrows():
 			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
-				tops = tops.append(row)
+				tops = pd.concat([tops,row])
 				last = row['Cycle']
 
 		#shrink the df
@@ -249,7 +249,7 @@ class HEAT_Analysis():
 			
 			row = pd.DataFrame([[title,date,hack_labels[j],daq_list[j][-1],strain,res_start,cycle_res10p,cycle_6,cycle_10,cycle_50,cycle_100,omars_10p_limit,omars_50p_limit]],
 							   columns=limit_columns )
-			limit_df = limit_df.append(row)
+			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
 		# save Limit df

@@ -120,12 +120,13 @@ def main():
 		runN_in = '**' + prompt1 + '**\\**.csv'
 		runN_files = glob.glob(runN_in,recursive = True)
 		print('\n')
-		print(run1_files)
+		print(runN_files)
 		print('\n')
 		prompt2 = input('Are these the files from the next run? (y) or (n)')
 		if prompt2 == 'y':
 			prompt3 = input('Do you need to append any more files? (y) or (n)')
 			if prompt3 == 'y':
+				h.find_first_row(runN_files)
 				h.create_bigdf(runN_files)
 				continue
 			elif prompt3 == 'n':
