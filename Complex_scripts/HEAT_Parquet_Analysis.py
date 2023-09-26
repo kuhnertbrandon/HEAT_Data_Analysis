@@ -764,33 +764,33 @@ def main():
 	### These four things get done in this order no matter what
 	#h.create_bigdf()
 	#h.save_df_to_parquet()
-	# h.plot_bigdf_moving_average()
+	h.plot_bigdf_moving_average()
 	h.create_limitdf()
-	# h.mini_barplot()
+	h.mini_barplot()
 	
 
-	# ### Here on uses logic to identify file type
-	# if indicator == 0:
-	# 	while True:
-	# 		prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
-	# 		if prompt == 's':
-	# 			break
-	# 		elif prompt == '1':
-	# 			h.comparison_bar_plot_Hack(prompt)
-	# 			break
-	# 		else:
-	# 			print('\n Not an option! \n ') 
-	# elif indicator == 1 :
-	# 	h.append_limit_df_to_master()
-	# 	h.master_scatter_plot()
-	# elif indicator == 2:
-	# 	h.append_limit_df_to_master()
-	# 	h.master_scatter_plot()
-	# else:
-	# 	print('UNRECOGNIZED Sample')
+	### Here on uses logic to identify file type
+	if indicator == 0:
+		while True:
+			prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
+			if prompt == 's':
+				break
+			elif prompt == '1':
+				h.comparison_bar_plot_Hack(prompt)
+				break
+			else:
+				print('\n Not an option! \n ') 
+	elif indicator == 1 :
+		h.append_limit_df_to_master()
+		h.master_scatter_plot()
+	elif indicator == 2:
+		h.append_limit_df_to_master()
+		h.master_scatter_plot()
+	else:
+		print('UNRECOGNIZED Sample')
 
-	# #print('No N drive transfer!!')
-	# h.move_to_Ndrive()
+	#print('No N drive transfer!!')
+	h.move_to_Ndrive()
 	h.end()
 	
 
