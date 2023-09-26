@@ -154,8 +154,8 @@ class HEAT_Analysis():
 		bigdf = self.bigdf
 		#### Omars Limit work
 		f_100_cycles = bigdf[bigdf['Cycle'] <= 100]
-		tops = pd.DataFrame() ## tops of first 100
 		last = f_100_cycles['Cycle'].iloc[0]
+		tops = f_100_cycles.iloc[0]
 		for index,row in f_100_cycles.iterrows():
 			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
 				tops = pd.concat([tops,row])
