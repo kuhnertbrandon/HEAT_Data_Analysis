@@ -768,15 +768,15 @@ def main():
 	if indicator == 0:
 		h.append_limit_df_to_master()
 		h.master_scatter_plot()
-		while True:
-			prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
-			if prompt == 's':
-				break
-			elif prompt == '1':
-				h.comparison_bar_plot_Hack(prompt)
-				break
-			else:
-				print('\n Not an option! \n ') 
+		# while True:
+		# 	prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
+		# 	if prompt == 's':
+		# 		break
+		# 	elif prompt == '1':
+		# 		h.comparison_bar_plot_Hack(prompt)
+		# 		break
+		# 	else:
+		# 		print('\n Not an option! \n ') 
 	elif indicator == 1 :
 		h.append_limit_df_to_master()
 		h.master_scatter_plot()

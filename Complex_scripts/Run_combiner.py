@@ -35,6 +35,7 @@ class HEAT_Analysis():
 
 	def find_first_row(self,files_in):
 		### This function finds the start of the data, you want to run this separate to not get an IOpub error
+		self.start_line = None
 		search_word = 'Time ('
 		if files_in is None:
 			print('No csv files found')
@@ -65,6 +66,7 @@ class HEAT_Analysis():
 			 ### Open and delete first 4 rows
 			with open(file , 'r') as f:
 				data = f.readlines()[self.start_line:]
+
 			
 			# Then read from the next rows without joining the data
 			df = pd.read_csv(io.StringIO('\n'.join(data)))
@@ -72,6 +74,7 @@ class HEAT_Analysis():
 
 			bigdf = pd.concat([bigdf,df])
 			### At this point you have the raw data and its named, time to move it
+
 
 		### Keep these loops separate to not mess up work flow
 		if self.huge_df.empty == True:
@@ -130,6 +133,7 @@ def main():
 				h.create_bigdf(runN_files)
 				continue
 			elif prompt3 == 'n':
+				h.find_first_row(runN_files)
 				h.create_bigdf(runN_files)
 				break
 		elif prompt2 == 'n':
