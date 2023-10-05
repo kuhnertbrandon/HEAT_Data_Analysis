@@ -155,7 +155,7 @@ class HEAT_Analysis():
 		#### Omars Limit work
 		f_100_cycles = bigdf[bigdf['Cycle'] <= 100]
 		last = f_100_cycles['Cycle'].iloc[0]
-		f_100_list = df.columns.tolist()
+		f_100_list = bigdf.columns.tolist()
 		tops = f_100_cycles.iloc[0]
 		for index,row in f_100_cycles.iterrows():
 			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
@@ -773,6 +773,8 @@ def main():
 
 	### Here on uses logic to identify file type
 	if indicator == 0:
+		h.append_limit_df_to_master()
+		h.master_scatter_plot()
 		# while True:
 		# 	prompt = input("\n Which master plot do you want to compare with? (Input the number, s to skip) \n '1' : 'HackFPC_w_islands_limits.csv' \n")
 		# 	if prompt == 's':
@@ -782,6 +784,7 @@ def main():
 		# 		break
 		# 	else:
 		# 		print('\n Not an option! \n ') 
+		print('Hi')
 	elif indicator == 1 :
 		h.append_limit_df_to_master()
 		h.master_scatter_plot()
