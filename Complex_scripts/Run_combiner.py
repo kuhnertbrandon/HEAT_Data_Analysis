@@ -75,8 +75,9 @@ class HEAT_Analysis():
 			bigdf = pd.concat([bigdf,df])
 			### At this point you have the raw data and its named, time to move it
 
-
+		bigdf = bigdf.sort_values(by=['Time (Seconds)'])
 		### Keep these loops separate to not mess up work flow
+
 		if self.huge_df.empty == True:
 			self.huge_df = pd.concat([self.huge_df,bigdf])
 		else:

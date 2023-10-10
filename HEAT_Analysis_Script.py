@@ -25,7 +25,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07','08','09']   ### NEED
+		self.bend_list = ['05','06','07','08','09','10','11']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -110,6 +110,8 @@ class HEAT_Analysis():
 			### At this point you have the raw data and its named, time to move it
 
 		### Keep these loops separate to not mess up work flow
+
+		self.bigdf = self.bigdf.sort_values(by=['Time (Seconds)'])
 	
 		raw_dirs = self.dirs + 'Raw\\'
 		if os.path.exists(raw_dirs):
