@@ -25,7 +25,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07','08','09','10','11']   ### NEED
+		self.bend_list = ['05','06','07','08','09','10','11','12','13','14']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -188,10 +188,6 @@ class HEAT_Analysis():
 			omars_start = tops[i].mean()
 			omars_10p = omars_start * 1.1
 			omars_50p = omars_start * 1.5	
-
-			
-			
-			
 			
 			
 			res_start = smoldf[i].iloc[0]
