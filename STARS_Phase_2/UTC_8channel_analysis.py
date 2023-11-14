@@ -153,9 +153,9 @@ class HEAT_Analysis():
 			shutil.move(files,self.dirs + files)
 
 
-	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay):
+	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','modulus_gpa','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -221,7 +221,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,moduli,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -240,6 +240,7 @@ class HEAT_Analysis():
 				return row['array']
 
 		limit_df['array'] = limit_df.apply(capitalize_letters, axis=1)
+
 
 
 		limit_df.loc[limit_df['shape'] == 'A','shape'] = 'straight'
@@ -490,6 +491,7 @@ class HEAT_Analysis():
 def main():
 
 	h = HEAT_Analysis()
+	print('\n Input the answer in the parenthesis \n')
 
 	while True:
 		prompt1 = input('\n What type of Sampe is this? \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
@@ -500,7 +502,7 @@ def main():
 			break
 		elif prompt1 == 'u':
 			s_type = 'unified_coupon'
-			prompt17 = input('\n Manufacturer? \n (c) Carlisle \n (a) Altaflex')
+			prompt17 = input('\n Manufacturer? \n (c) Carlisle \n (a) Altaflex \n')
 			if prompt17 == 'c':
 				manufacturer = 'Carlisle'
 			elif prompt17 == 'a':
@@ -510,7 +512,7 @@ def main():
 				continue
 
 			
-			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP')
+			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n')
 			if prompt18 == 'c':
 				alloy = 'Cu_RA'
 				break
@@ -556,6 +558,17 @@ def main():
 		else:
 			print('Try again there buddy')
 
+	while True:
+		prompt22= input('\n Dupont or Panasonic Polyimide? (d) or (p)\n')
+		if prompt22 == 'd':
+			modulus = 4.8
+			break
+		elif prompt22 == 'p':
+			modulus = 7.1
+			break
+		else:
+			print('Try again there buddy')
+
 
 	user_chan_list = []
 	while True:
@@ -582,7 +595,7 @@ def main():
 	h.plot_bigdf_moving_average()
 
 	# Create and append limit	
-	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay)
+	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
 	h.append_limit_df_to_master()
 
 
