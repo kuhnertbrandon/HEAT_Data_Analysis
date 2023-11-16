@@ -153,15 +153,18 @@ class HEAT_Analysis():
 			shutil.move(files,self.dirs + files)
 
 
-	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
+	def create_limitdf(self,rod_diameter,maker,encapsulation,daq_style):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','modulus_gpa','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','encapsulation','trace','physical_position','strain_p','shape','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
 		title = self.title
 		date = self.timestamp
 		daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
+
+		if daq_style =='8':
+			sample_list = ['']
 		
 		
 		
@@ -197,12 +200,6 @@ class HEAT_Analysis():
 				strain = rod_diameter + 'mm_bend'
 			else:
 				strain = str(rod_diameter) + 'mm_bend'
-
-			### Omar's limit
-			omars_start = tops[i].mean()
-			omars_10p = omars_start * 1.1
-			omars_50p = omars_start * 1.5	
-			
 			
 			res_start = smoldf[i].iloc[0]
 
@@ -221,35 +218,21 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,moduli,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,date,maker,encapsulation,sample_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
 
-		### Add more columns to df
-		limit_df['shape'] = limit_df['trace'].str.extract(r'([A-Z]+)')
-		limit_df['width'] = limit_df['trace'].str.extract(r'(\d+)')
 
-		limit_df['array'] = limit_df['trace'].str[-2:]
+		# Split the strings in the 'col' column by the underscore character
+		limit_df['col_split'] = df['trace'].str.split('_')
 
-		def capitalize_letters(row):
-			if row['shape'] == 'D' or row['shape'] == 'E':
-				return row['shape']
-			else:
-				return row['array']
-
-		limit_df['array'] = limit_df.apply(capitalize_letters, axis=1)
+		# Create new columns for each character in the split strings with specific column names
+		limit_df[['ground', 'strip_type', 'layer', 'loop_position']] = pd.DataFrame(dict(zip(['ground', 'co-planar', 'layer', 'loop_position'], df['col_split'].tolist())), index=df.index)
+		
 
 
-
-		limit_df.loc[limit_df['shape'] == 'A','shape'] = 'straight'
-		limit_df.loc[limit_df['shape'] == 'C','shape'] = 'serpentine'
-		limit_df.loc[limit_df['shape'] == 'E','shape'] = 'straight'
-		limit_df.loc[limit_df['shape'] == 'D','shape'] = 'serpentine'
-
-
-		limit_df['width'] = pd.to_numeric(limit_df['width'])
 		limit_df['radius'] = limit_df['strain_p'].str[0:1]
 		limit_df['radius'] = pd.to_numeric(limit_df['radius'])
 		limit_df['channel'] = limit_df['physical_position'].str[-1]
@@ -432,25 +415,7 @@ class HEAT_Analysis():
 				fig.savefig(self.dirs + save +'_cycles_v_tw' + self.timestamp+'.jpg')
 
 
-	def read_parquet_file(self,parquet_file):
-		dfp=pd.read_parquet(parquet_file)
-		self.bigdf = dfp 
-		self.title = parquet_file[0:12] # Morteza wants 14
-		self.dirs = self.title +'\\'
-		
 
-		self.dirs = self.title +'\\'
-		if os.path.exists(self.dirs):
-			pass
-		else:
-			os.makedirs(self.dirs)
-			try:
-				shutil.move(parquet_file,self.dirs + parquet_file)
-			except:
-				print('Could not move parquet file!!!')
-
-
-		return self.title,self.indicator
 
 
 	def save_df_to_parquet(self):
@@ -511,101 +476,27 @@ def main():
 	h = HEAT_Analysis()
 	print('\n Input the answer in the parenthesis \n')
 
-	while True:
-		prompt1 = input('\n What type of Sampe is this? (Just select u, I do not want to refactor) \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
-		if prompt1 == 'l':
-			s_type = '1L_copper_coupon'
-			alloy = 'Cu_RA'
-			manufacturer = 'Altaflex'
-			break
-		elif prompt1 == 'u':
-			s_type = 'unified_coupon'
-			prompt17 = input('\n Manufacturer? \n (c) Carlisle \n (a) Altaflex \n')
-			if prompt17 == 'c':
-				manufacturer = 'Carlisle'
-			elif prompt17 == 'a':
-				manufacturer = 'Altaflex'
-			else:
-				print('not an option')
-				continue
-
-			
-			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n')
-			if prompt18 == 'c':
-				alloy = 'Cu_RA'
-				break
-			elif prompt18 == 'o':
-				alloy = 'Cu_O2_free'
-				break
-			elif prompt18 == 'cn':
-				alloy = 'CuNi3Si'
-				break
-			elif prompt18 == 'cz':
-				alloy = 'CuZn30'
-				break
-			elif prompt18 == 'cc':
-				alloy = 'CuCrZr'
-				break
-			elif prompt18 == 'cm':
-				alloy = 'CuMgAgP'
-				break
-			else:
-				print('Try again there bud')
-				continue
-
 
 	while True:
 		prompt11 = input('\n What size bend rod was used? \n')
 		if prompt11 == '7':
 			rod_d = prompt11
 			break
-		elif prompt11 == '3':
+		elif prompt11 == '5':
 			rod_d = prompt11
 			break
 		else:
 			print('Only 3 and 7 have been tested')
 
-	while True:
-		prompt21 = input('\n Coverlay? (y) or (n)\n')
-		if prompt21 == 'y':
-			c_lay = 'Y'
-			break
-		elif prompt21 == 'n':
-			c_lay = 'N'
-			break
-		else:
-			print('Try again there buddy')
 
-	while True:
-		prompt22= input('\n Dupont or Panasonic Polyimide? (d) or (p)\n')
-		if prompt22 == 'd':
-			modulus = 4.8
-			break
-		elif prompt22 == 'p':
-			modulus = 7.1
-			break
-		else:
-			print('Try again there buddy')
+	# Inputs
+	# shape
+	# encapsulation
+	# rod size
 
 
-	user_chan_list = []
-	while True:
-		for i in range(1,9):
-			prompt_repeating = input('\n What was on channel DAQ' + str(i) + '? \n')
-			user_chan_list.append(prompt_repeating)
-			print(user_chan_list)
 
-		prompt2 = input('\n Does this channel list match your sample? (y) or (n) \n')
-		if prompt2 == 'y':
-			print('Moving On')
-			break
-		elif prompt2 == 'n':
-			user_chan_list = []
-			continue
-		else:
-			user_chan_list = []
-			print('Invalid Input')
-
+	### Run standard functions
 	h.assign_channels(user_chan_list)
 	h.glob_search_csv()
 	h.find_first_row()
@@ -613,7 +504,7 @@ def main():
 	h.plot_bigdf_moving_average()
 
 	# Create and append limit	
-	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
+	h.create_limitdf(rod_d,manufacturer,alloy,encap,modulus)
 	h.append_limit_df_to_master()
 
 
@@ -630,3 +521,6 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+
+	### J1 to J1
