@@ -432,7 +432,25 @@ class HEAT_Analysis():
 				fig.savefig(self.dirs + save +'_cycles_v_tw' + self.timestamp+'.jpg')
 
 
+	def read_parquet_file(self,parquet_file):
+		dfp=pd.read_parquet(parquet_file)
+		self.bigdf = dfp 
+		self.title = parquet_file[0:12] # Morteza wants 14
+		self.dirs = self.title +'\\'
+		
 
+		self.dirs = self.title +'\\'
+		if os.path.exists(self.dirs):
+			pass
+		else:
+			os.makedirs(self.dirs)
+			try:
+				shutil.move(parquet_file,self.dirs + parquet_file)
+			except:
+				print('Could not move parquet file!!!')
+
+
+		return self.title,self.indicator
 
 
 	def save_df_to_parquet(self):

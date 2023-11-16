@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import sys
 import shutil
+import re
 
 
 def lim30for10(df):
@@ -152,9 +153,9 @@ class HEAT_Analysis():
 			shutil.move(files,self.dirs + files)
 
 
-	def create_limitdf(self,coupon_type,rod_diameter):
+	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','modulus_gpa','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -220,7 +221,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,moduli,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -236,9 +237,10 @@ class HEAT_Analysis():
 			if row['shape'] == 'D' or row['shape'] == 'E':
 				return row['shape']
 			else:
-				pass
+				return row['array']
 
 		limit_df['array'] = limit_df.apply(capitalize_letters, axis=1)
+
 
 
 		limit_df.loc[limit_df['shape'] == 'A','shape'] = 'straight'
@@ -430,7 +432,25 @@ class HEAT_Analysis():
 				fig.savefig(self.dirs + save +'_cycles_v_tw' + self.timestamp+'.jpg')
 
 
+	def read_parquet_file(self,parquet_file):
+		dfp=pd.read_parquet(parquet_file)
+		self.bigdf = dfp 
+		self.title = parquet_file[0:12] # Morteza wants 14
+		self.dirs = self.title +'\\'
+		
 
+		self.dirs = self.title +'\\'
+		if os.path.exists(self.dirs):
+			pass
+		else:
+			os.makedirs(self.dirs)
+			try:
+				shutil.move(parquet_file,self.dirs + parquet_file)
+			except:
+				print('Could not move parquet file!!!')
+
+
+		return self.title,self.indicator
 
 
 	def save_df_to_parquet(self):
@@ -448,14 +468,14 @@ class HEAT_Analysis():
 		else:
 			os.makedirs(self.dirs)
 
-		try:
-			for files in txt_files:
+		try: 
+			for files in png_files:
 				shutil.move(files,self.dirs + files)
 		except:
 			pass
 
 		try:
-			for files in png_files:
+			for files in txt_files:
 				shutil.move(files,self.dirs + files)
 		except:
 			pass
@@ -478,23 +498,6 @@ class HEAT_Analysis():
 			shutil.copytree(self.dirs, n_path)
 			print('\n Backed up to N drive \n')
 
-	def read_parquet_file(self,parquet_file):
-		dfp=pd.read_parquet(parquet_file)
-		self.bigdf = dfp 
-		self.title = parquet_file[0:12] # Morteza wants 14
-		self.dirs = self.title +'\\'
-		print('Read the df from a parquet')
-
-		self.dirs = self.title +'\\'
-		if os.path.exists(self.dirs):
-			pass
-		else:
-			os.makedirs(self.dirs)
-			try:
-				shutil.move(parquet_file,self.dirs + parquet_file)
-			except:
-				print('Could not move parquet file!!!')
-
 
 	def end(self):
 		print('Finished!!')
@@ -506,21 +509,50 @@ class HEAT_Analysis():
 def main():
 
 	h = HEAT_Analysis()
+	print('\n Input the answer in the parenthesis \n')
 
 	while True:
 		prompt1 = input('\n What type of Sampe is this? \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
 		if prompt1 == 'l':
 			s_type = '1L_copper_coupon'
+			alloy = 'Cu_RA'
+			manufacturer = 'Altaflex'
 			break
 		elif prompt1 == 'u':
-			print('These do not exist yet')
-			sys.exit()
+			s_type = 'unified_coupon'
+			prompt17 = input('\n Manufacturer? \n (c) Carlisle \n (a) Altaflex \n')
+			if prompt17 == 'c':
+				manufacturer = 'Carlisle'
+			elif prompt17 == 'a':
+				manufacturer = 'Altaflex'
+			else:
+				print('not an option')
+				continue
 
-		elif prompt1 == '4':
-			print('These do not exist yet')
-			sys.exit()
-		else:
-			print('Try again there bud')
+			
+			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n')
+			if prompt18 == 'c':
+				alloy = 'Cu_RA'
+				break
+			elif prompt18 == 'o':
+				alloy = 'Cu_O2_free'
+				break
+			elif prompt18 == 'cn':
+				alloy = 'CuNi3Si'
+				break
+			elif prompt18 == 'cz':
+				alloy = 'CuZn30'
+				break
+			elif prompt18 == 'cc':
+				alloy = 'CuCrZr'
+				break
+			elif prompt18 == 'cm':
+				alloy = 'CuMgAgP'
+				break
+			else:
+				print('Try again there bud')
+				continue
+
 
 	while True:
 		prompt11 = input('\n What size bend rod was used? \n')
@@ -532,6 +564,28 @@ def main():
 			break
 		else:
 			print('Only 3 and 7 have been tested')
+
+	while True:
+		prompt21 = input('\n Coverlay? (y) or (n)\n')
+		if prompt21 == 'y':
+			c_lay = 'Y'
+			break
+		elif prompt21 == 'n':
+			c_lay = 'N'
+			break
+		else:
+			print('Try again there buddy')
+
+	while True:
+		prompt22= input('\n Dupont or Panasonic Polyimide? (d) or (p)\n')
+		if prompt22 == 'd':
+			modulus = 4.8
+			break
+		elif prompt22 == 'p':
+			modulus = 7.1
+			break
+		else:
+			print('Try again there buddy')
 
 
 	user_chan_list = []
@@ -561,7 +615,7 @@ def main():
 	h.plot_bigdf_moving_average()
 
 	# Create and append limit	
-	h.create_limitdf(s_type,rod_d)
+	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
 	h.append_limit_df_to_master()
 
 
