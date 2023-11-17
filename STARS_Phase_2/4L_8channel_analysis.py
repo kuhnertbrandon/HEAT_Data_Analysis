@@ -161,24 +161,19 @@ class HEAT_Analysis():
 
 		title = self.title
 		date = self.timestamp
-		daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
+		
 
 		if daq_style =='8':
-			sample_list = ['']
-		
-		
+			daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
+			sample_list = ['hg_s_l3_l','sg_s_l3_l','hg_s_l2_l','sg_s_l2_l','hg_c_l3_l','sg_c_l3_l','hg_c_l2_l','sg_c_l2_l']
+
+		elif daq_style == '16':
+			daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8','DAQ9','DAQ10','DAQ11','DAQ12','DAQ13','DAQ14','DAQ15','DAQ16']
+			sample_list = ['hg_s_l3_l','hg_s_l3_r','sg_s_l3_l','sg_s_l3_r','hg_s_l2_l','hg_s_l2_r','sg_s_l2_l','sg_s_l2_r','hg_c_l3_l','hg_c_l3_r','sg_c_l3_l','sg_c_l3_r','hg_c_l2_l','hg_c_l2_r','sg_c_l2_l','sg_c_l2_r']
+
 		
 
 		bigdf = self.bigdf
-		#### Omars Limit work
-		f_100_cycles = bigdf[bigdf['Cycle'] <= 100]
-		last = f_100_cycles['Cycle'].iloc[0]
-		f_100_list = bigdf.columns.tolist()
-		tops = f_100_cycles.iloc[0]
-		for index,row in f_100_cycles.iterrows():
-			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
-				tops = pd.concat([tops,row])
-				last = row['Cycle']
 		
 
 		#shrink the df
@@ -248,8 +243,8 @@ class HEAT_Analysis():
 
 	def append_limit_df_to_master(self):
 		### Find master csv
-		npre = 'N:\\STARS2_test_data\\master\\'
-		masname = 'STARS2_Unified_FPC_Bend_Master.csv'
+		npre = 'N:\\4L_test_data\\master\\'
+		masname = '4L_Bend_Master.csv'
 		oldname = npre + 'old\\' +  self.mini_timestamp + masname
 
 		self.master_path = npre
@@ -322,98 +317,6 @@ class HEAT_Analysis():
 		print('\n Raw cycle plot created')
 
 
-	def master_to_percentage_plt(self):
-		df = self.master_df
-		
-		names = ['10 %','30 %']
-		trace_widths = [10,25,50,100,150,200]
-		
-		df['shape'] = df['trace'].str.extract(r'([A-Z]+)')
-		df['width'] = df['trace'].str.extract(r'(\d+)')
-		df.loc[df['shape'] == 'A','shape'] = 'straight'
-		df.loc[df['shape'] == 'C','shape'] = 'serpentine'
-		df['width'] = pd.to_numeric(df['width'])
-		
-		for j in trace_widths:
-			
-			tdf = df[df['width'] == j]
-			if tdf.size <2:
-				continue
-			
-			dfst = tdf[tdf['shape'] == 'straight'].reset_index(drop=True)
-			dfse =tdf[tdf['shape'] == 'serpentine'].reset_index(drop=True)
-			dfs = [dfst,dfse]
-
-
-
-			for name in names:
-				fig, ax = plt.subplots(figsize=(20,15))
-				if name == '10 %':
-					x_col = '10_p_increase_cycles'
-					save = '10p'
-				elif name == '30 %':
-					x_col = '30_p_increase_for_10_cycles'
-					save = '30p_for_10'
-				for i in dfs:
-					dft = i.sort_values(by=[x_col]).reset_index(drop=True)
-					dft_top = dft.index[-1]
-					dft['percentage'] = np.round(dft.index/dft_top*100,2)
-					ax.plot(dft[x_col],dft['percentage'],'--o',markersize=15)
-
-				ax.legend(['Straight','Serpentine'],fancybox=True,framealpha=1,fontsize=22)
-
-				ax.set_ylabel('Percentage Failed',fontsize=22)
-				ax.set_title('Cycles vs Percent Population Failed '+ name + ': Trace Width: '+ str(j) +' (um) '+ self.pretty_timestamp,fontsize=28)
-				ax.set_xlabel('Cycles',fontsize=22)
-				ax.set_yticks(range(0,110,10))
-				ax.yaxis.grid(which='major',linestyle='--')
-				ax.tick_params(axis='both', which='major', labelsize=18)
-				ax.set_xlim(left=0)
-				fig.savefig(self.dirs + save + '_tw' +str(j) +'_increase_percentPop' + self.timestamp+'.jpg')
-
-	def master_v_trace_width(self):
-			df = self.master_df
-		
-			names = ['10 %','30 %']
-			
-			
-			df['shape'] = df['trace'].str.extract(r'([A-Z]+)')
-			df['width'] = df['trace'].str.extract(r'(\d+)')
-			df.loc[df['shape'] == 'A','shape'] = 'straight'
-			df.loc[df['shape'] == 'C','shape'] = 'serpentine'
-			df['width'] = pd.to_numeric(df['width'])
-
-			dfst = df[df['shape'] == 'straight'].reset_index(drop=True)
-			dfse =df[df['shape'] == 'serpentine'].reset_index(drop=True)
-			dfs = [dfst,dfse]
-
-			for name in names:
-				fig, ax = plt.subplots(figsize=(20,15))
-				if name == '10 %':
-					y_col = '10_p_increase_cycles'
-					save = '10p'
-				elif name == '30 %':
-					y_col = '30_p_increase_for_10_cycles'
-					save = '30p_for_10'
-				for i in dfs:
-					dft = i.sort_values(by=[y_col]).reset_index(drop=True)
-					dft_top = dft.index[-1]
-					dft['percentage'] = np.round(dft.index/dft_top*100,2)
-					ax.scatter(pd.to_numeric(dft['width']),dft[y_col],s=150)
-
-
-				ax.legend(['Straight','Serpentine'],fancybox=True,framealpha=1,fontsize=22)
-
-				ax.set_ylabel('Cycles',fontsize=22)
-				ax.set_title('Cycles vs Trace Width ' + name+  ' '+ self.pretty_timestamp,fontsize=28) #+ name+ ': '+ pretty_timestamp
-				ax.set_xlabel('Trace Width (microns)',fontsize=22)
-				ax.set_xticks(range(0,275,25))
-				ax.xaxis.grid(which='major',linestyle='--')
-				ax.tick_params(axis='both', which='major', labelsize=22)
-				ax.set_xlim(0,250)
-				ax.set_xlim(left=0)
-				fig.savefig(self.dirs + save +'_cycles_v_tw' + self.timestamp+'.jpg')
-
 
 
 
@@ -447,7 +350,7 @@ class HEAT_Analysis():
 
 	def move_to_Ndrive(self):
 		## Check if they have N drive mapped 
-		Ndrive_prefix = 'N:\\STARS2_test_data\\'
+		Ndrive_prefix = 'N:\\4L_test_data\\'
 		if os.path.exists(Ndrive_prefix):
 			pass
 		else:
@@ -479,14 +382,25 @@ def main():
 
 	while True:
 		prompt11 = input('\n What size bend rod was used? \n')
-		if prompt11 == '7':
-			rod_d = prompt11
+		if prompt1 == '7':
+			rod_d = prompt1
 			break
-		elif prompt11 == '5':
-			rod_d = prompt11
+		elif prompt1 == '5':
+			rod_d = prompt1
+			break
+		elif prompt1 == '4':
+			rod_d = prompt1
 			break
 		else:
-			print('Only 3 and 7 have been tested')
+			print('Only 4, 5, and 7 have been tested')
+
+	prompt17 = input('\n Manufacturer? \n (i) In-House (RDL) \n (a) Altaflex \n')
+			if prompt17 == 'i':
+				manufacturer = 'Carlisle'
+			elif prompt17 == 'a':
+				manufacturer = 'Altaflex'
+			else:
+				print('not an option')
 
 
 	# Inputs
