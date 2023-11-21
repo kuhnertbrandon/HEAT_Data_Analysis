@@ -381,7 +381,7 @@ def main():
 
 
 	while True:
-		prompt11 = input('\n What size bend rod was used? \n')
+		prompt1 = input('\n What size bend rod was used? \n')
 		if prompt1 == '7':
 			rod_d = prompt1
 			break
@@ -391,34 +391,64 @@ def main():
 		elif prompt1 == '4':
 			rod_d = prompt1
 			break
+		elif prompt1 == '3':
+			rod_d = prompt1
+			break
 		else:
-			print('Only 4, 5, and 7 have been tested')
+			print('Only 3, 4, 5, and 7 have been tested')
 
-	prompt17 = input('\n Manufacturer? \n (i) In-House (RDL) \n (a) Altaflex \n')
-			if prompt17 == 'i':
-				manufacturer = 'Carlisle'
-			elif prompt17 == 'a':
-				manufacturer = 'Altaflex'
-			else:
-				print('not an option')
+	while True:
+		prompt2 = input('\n Manufacturer? \n (i) In-House (RDL) \n (a) Altaflex \n')
+		if prompt2 == 'i':
+			manufacturer = 'In-house'
+			break
+		elif prompt2 == 'a':
+			manufacturer = 'Altaflex'
+			break
+		else:
+			print('not an option')
 
 
-	# Inputs
-	# shape
-	# encapsulation
-	# rod size
+	while True:
+		prompt3 = input('\n Shape? \n (t) Straight \n (p) Serp \n')
+		if prompt3 == 't':
+			shape = 'straight'
+			break
+		elif prompt3 == 'p':
+			shape = 'serpentine'
+			break
+		else:
+			print('Try again there bud')
+
+	while True:
+		prompt4 =input('\n Encapsulation? \n (y) yes or (n) no \n')
+		if prompt4 =='y':
+			encap = 'Y'
+			break
+		elif prompt4 =='n':
+			encap = 'N'
+			break
+		else:
+			print('Try again there bud')
+
+	while True:
+		prompt5 = input('\n 8 or 16 channel? \n (8) or (16) \n ')
+		if prompt5 == '8' or prompt5 =='16':
+			daq_number = prompt5
+			break
+		else:
+			print('Try again there bud')
 
 
 
 	### Run standard functions
-	h.assign_channels(user_chan_list)
 	h.glob_search_csv()
 	h.find_first_row()
 	h.create_bigdf()
 	h.plot_bigdf_moving_average()
 
 	# Create and append limit	
-	h.create_limitdf(rod_d,manufacturer,alloy,encap,modulus)
+	h.create_limitdf(rod_d,manufacturer,alloy,encap,daq_number)
 	h.append_limit_df_to_master()
 
 
