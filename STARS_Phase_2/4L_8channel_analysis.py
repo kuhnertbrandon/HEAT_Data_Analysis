@@ -65,6 +65,7 @@ class HEAT_Analysis():
 		self.channel_list = None
 		self.dfs = None
 		self.names = None
+		self.daq_list = None
 
 
 	def assign_channels(self,intake_channel_list):
@@ -123,7 +124,7 @@ class HEAT_Analysis():
 
 			self.bigdf = pd.concat([self.bigdf,df])
 		#sort values incase something weird happens
-		self.bigdf = self.bigdf.sort_values(by=['Time (Seconds)'])
+		self.bigdf = self.bigdf.sort_values(by=['Time (Seconds)']).reset_index(drop=True)
 
 			### At this point you have the raw data and its named, time to move it
 
@@ -238,6 +239,7 @@ class HEAT_Analysis():
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
+		self.daq_list = daq_list
 		
 		self.limit_df = limit_df
 
@@ -271,8 +273,7 @@ class HEAT_Analysis():
 		if mov_avg < 3:
 			mov_avg = 3
 		graph_title = self.title + ': '
-		daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
-
+		daq_list = self.daq_list
 			
 	 
 

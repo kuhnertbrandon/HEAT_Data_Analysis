@@ -530,7 +530,7 @@ def main():
 				continue
 
 			
-			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n')
+			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n (cs) CuSn6 \n')
 			if prompt18 == 'c':
 				alloy = 'Cu_RA'
 				break
@@ -548,6 +548,9 @@ def main():
 				break
 			elif prompt18 == 'cm':
 				alloy = 'CuMgAgP'
+				break
+			elif prompt18 == 'cs':
+				alloy = 'CuSn6'
 				break
 			else:
 				print('Try again there bud')
