@@ -1,0 +1,5 @@
+ipython notebooks and git don't play nice.
+ipython essentially is its own git.
+
+ipython notebooks can be found here:
+\\snc-isiarchive03-smb\agios_nomansland_smb_001\users\Brandon\ipython_notebooks

@@ -56,7 +56,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07','08','09','10','11','12','13','14','15','16','17','18','19']   ### NEED
+		self.bend_list = ['05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -66,10 +66,15 @@ class HEAT_Analysis():
 		self.dfs = None
 		self.names = None
 		self.daq_list = None
+		self.current_cycle = None
+		self.instrum_serial = None
 
 
 	def assign_channels(self,intake_channel_list):
 		self.channel_list = intake_channel_list 
+
+	def bend_serial(self,serial_input):
+		self.instrum_serial = 'Bend_SN' + serial_input
 
 
 	def glob_search_csv(self):
@@ -79,7 +84,7 @@ class HEAT_Analysis():
 		### Find serial in sea of lies
 		delim_name = self.file_list[0]
 		delim_file = delim_name.split('_')
-		self.title = delim_file[-3]
+		self.title = delim_file[-4]
 		
 
 		self.dirs = self.title +'\\'
@@ -99,14 +104,12 @@ class HEAT_Analysis():
 
 		return self.title
 
-	def pull_daq_channels(self):
+	def pull_daq_channels_live(self):
 		df = self.bigdf
 		# get a list of all column headers
 		headers = df.columns.tolist()
 		# create a sublist of headers containing the substring 'daq'
 		daq_headers = [header for header in headers if 'daq' in header]
-		print(daq_headers)
-
 
 		if len(daq_headers) == 48:
 			self.daq_list = daq_headers
@@ -136,13 +139,13 @@ class HEAT_Analysis():
 					print('Invalid Input. Restarting ')
 
 
-			#print('Lengths of lists')
-			#print(len(daq_headers) == len(user_chan_list))
-			if len(daq_headers) == len(user_chan_list):
-				self.daq_list = daq_headers
-				self.channel_list = user_chan_list
-			else:
-				print('DAQ channels do not align!!!! This is a code error')
+		print('Lengths of lists')
+		print(len(daq_headers) == len(user_chan_list))
+		if len(daq_headers) == len(user_chan_list):
+			self.daq_list = daq_headers
+			self.channel_list = user_chan_list
+		else:
+			print('DAQ channels do not align!!!! This is a code error')
 
 
 	def find_first_row(self):
@@ -165,6 +168,8 @@ class HEAT_Analysis():
 					if j > 150:
 						break
 
+
+						
 	def create_bigdf_new(self):
 		# Initialize an empty dictionary to store the dataframes
 
@@ -184,22 +189,6 @@ class HEAT_Analysis():
 		self.bigdf = self.bigdf.sort_values(by=['sec_incr']).reset_index(drop=True)
 		print(self.bigdf.shape)
 		
-
-		### At this point you have the raw data and its named, time to move it
-
-		### Keep these loops separate to not mess up work flow 
-
-		### Wayyy too much raw data, just moving parquets now
-	
-		# raw_dirs = self.dirs + 'Raw\\'
-		# if os.path.exists(raw_dirs):
-		# 	pass
-		# else:
-		# 	os.makedirs(raw_dirs)
-
-
-		# for files in csv_files:
-		# 	shutil.move(files,raw_dirs + files)
 
 	def create_bigdf_old(self):
 		# Initialize an empty dictionary to store the dataframes
@@ -226,15 +215,15 @@ class HEAT_Analysis():
 
 		### Keep these loops separate to not mess up work flow
 	
-		raw_dirs = self.dirs + 'Raw\\'
-		if os.path.exists(raw_dirs):
-			pass
-		else:
-			os.makedirs(raw_dirs)
+		# raw_dirs = self.dirs + 'Raw\\'
+		# if os.path.exists(raw_dirs):
+		# 	pass
+		# else:
+		# 	os.makedirs(raw_dirs)
 
 
-		for files in csv_files:
-			shutil.move(files,raw_dirs + files)
+		# for files in csv_files:
+		# 	shutil.move(files,raw_dirs + files)
 
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
@@ -252,7 +241,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','bend_SN','bend_current_not_a_failure']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -266,11 +255,13 @@ class HEAT_Analysis():
 		j=0
 		for i in self.daq_list:
 			smol_list = ['cycle',i]
+			bend_current_val = smol_list
 			print(i)
 			#print(smol_list)
 			#print(self.bigdf.shape)
 
 			smoldf = self.bigdf[smol_list].copy()
+			bend_current_val = smoldf['cycle'].iloc[-1]
 			# Create a rolling average
 			res_raw = smoldf[i]
 			if smoldf[i].iloc[0:10].isnull().values.all():
@@ -307,7 +298,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,self.instrum_serial,bend_current_val]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -339,7 +330,7 @@ class HEAT_Analysis():
 		limit_df['width'] = pd.to_numeric(limit_df['width'])
 		limit_df['radius'] = limit_df['strain_p'].str[0:1]
 		limit_df['radius'] = pd.to_numeric(limit_df['radius'])
-		limit_df['channel'] = limit_df['physical_position'].str.extract(r'(\d+)')
+		limit_df['channel'] = limit_df['physical_position'].str[-1]
 		limit_df['channel'] = pd.to_numeric(limit_df['channel'])
 
 		# save Limit df
@@ -588,10 +579,11 @@ class HEAT_Analysis():
 			shutil.copytree(self.dirs, n_path)
 			print('\n Backed up to N drive \n')
 
+		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
+
 
 	def end(self):
 		print('Finished!!')
-		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
 		sys.exit()
 ###################################################################
 
@@ -599,14 +591,15 @@ class HEAT_Analysis():
 def main():
 
 	h = HEAT_Analysis()
-	h.glob_search_csv()
-	#glob_par = glob.glob('**.parquet')
-	h.create_bigdf_new()
-	h.save_df_to_parquet()
-	#h.read_parquet_file(glob_par[0])
-	h.pull_daq_channels()
 	print('\n Input the answer in the parenthesis \n  \n YOU PROBABLY NEED TO CLOSE THE CHROME MONSTER \n \n')
 
+	#h.glob_search_csv()
+	glob_par = glob.glob('**.parquet')
+	#h.create_bigdf_new()
+	#h.save_df_to_parquet()
+	h.read_parquet_file(glob_par[0])
+	h.pull_daq_channels_live()
+	
 	while True:
 		prompt1 = input('\n What type of Sample is this? (Just select u, I do not want to refactor) \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
 		if prompt1 == 'l':
@@ -687,6 +680,15 @@ def main():
 			print('Try again there buddy')
 
 
+	while True:
+		prompt32= input('\n Benderita Serial Number? (Format "01" or "12" \n')
+		if len(prompt32) == 2:
+			h.bend_serial(prompt32)
+			break
+		else:
+			print('Try again there buddy')
+
+
 
 	# h.assign_channels(user_chan_list)
 	
@@ -705,8 +707,8 @@ def main():
 	#h.master_v_trace_width()
 
 	h.move_pngs()
-	#h.move_to_Ndrive()
-	h.end()
+	h.move_to_Ndrive()
+	#h.end()
 					
 
 

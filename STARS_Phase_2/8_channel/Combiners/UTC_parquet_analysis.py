@@ -56,7 +56,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07','08','09','10','11','12','13','14']   ### NEED
+		self.bend_list = ['05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -69,6 +69,7 @@ class HEAT_Analysis():
 
 	def assign_channels(self,intake_channel_list):
 		self.channel_list = intake_channel_list 
+
 
 
 	def glob_search_csv(self):
@@ -129,15 +130,15 @@ class HEAT_Analysis():
 
 		### Keep these loops separate to not mess up work flow
 	
-		raw_dirs = self.dirs + 'Raw\\'
-		if os.path.exists(raw_dirs):
-			pass
-		else:
-			os.makedirs(raw_dirs)
+		# raw_dirs = self.dirs + 'Raw\\'
+		# if os.path.exists(raw_dirs):
+		# 	pass
+		# else:
+		# 	os.makedirs(raw_dirs)
 
 
-		for files in csv_files:
-			shutil.move(files,raw_dirs + files)
+		# for files in csv_files:
+		# 	shutil.move(files,raw_dirs + files)
 
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
@@ -256,7 +257,7 @@ class HEAT_Analysis():
 		limit_df['channel'] = pd.to_numeric(limit_df['channel'])
 
 		# save Limit df
-		limit_name =self.title + '_limits.csv'
+		limit_name =self.title + '_limits_live.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
@@ -510,6 +511,12 @@ def main():
 
 	h = HEAT_Analysis()
 	print('\n Input the answer in the parenthesis \n')
+		#h.glob_search_csv()
+	glob_par = glob.glob('**.parquet')
+	#h.create_bigdf_new()
+	#h.save_df_to_parquet()
+	h.read_parquet_file(glob_par[0])
+	
 
 	while True:
 		prompt1 = input('\n What type of Sampe is this? (Just select u, I do not want to refactor) \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
@@ -609,22 +616,24 @@ def main():
 			user_chan_list = []
 			print('Invalid Input')
 
-	h.assign_channels(user_chan_list)
-	h.glob_search_csv()
-	h.find_first_row()
-	h.create_bigdf()
+
+	
+	# h.glob_search_csv()
+	# h.find_first_row()
+	# h.create_bigdf()
 	h.plot_bigdf_moving_average()
+	h.assign_channels(user_chan_list)
 
 	# Create and append limit	
 	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
-	h.append_limit_df_to_master()
+	#h.append_limit_df_to_master()
 
 
 	#h.master_to_percentage_plt()
 	#h.master_v_trace_width()
 
-	h.move_pngs()
-	h.move_to_Ndrive()
+	#h.move_pngs()
+	#h.move_to_Ndrive()
 	h.end()
 					
 

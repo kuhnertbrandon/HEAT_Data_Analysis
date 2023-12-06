@@ -18,14 +18,14 @@ def lim30for10(df):
 	for index,row in df.iterrows():
 		if in_last == None: ## Establish the index and cycle last
 			in_last = index
-			cyc_start = row['Cycle']
+			cyc_start = row['cycle']
 
 		track = index - in_last
 
 		if track > 1.1:                    # See if we pull data below limit
-			cyc_start = row['Cycle']
+			cyc_start = row['cycle']
 
-		cyc_now = row['Cycle']             #Grab Current cycle
+		cyc_now = row['cycle']             #Grab Current cycle
 		cyc_diff = cyc_now - cyc_start
 
 		if cyc_diff >= 10:                 #Break if you the data has remained above for 10 cycles
@@ -56,7 +56,7 @@ class HEAT_Analysis():
 		self.instrument = None
 		self.meta_list = ['device_id','daq_limit_cycles','Length - Preloaded','Displacement per Cycle'] ## Might need to switch in 'Device ID'
 		self.master_scatter = None 
-		self.bend_list = ['05','06','07','08','09','10','11','12','13','14','15','16','17','18']   ### NEED
+		self.bend_list = ['05','06','07','08','09','10','11','12','13','14','15','16','17','18','19']   ### NEED
 		self.instronita_list = ['01','02','03','04']
 		self.master_path = None
 		self.master_df = None
@@ -66,10 +66,15 @@ class HEAT_Analysis():
 		self.dfs = None
 		self.names = None
 		self.daq_list = None
+		self.current_cycle = None
+		self.instrum_serial = None
 
 
 	def assign_channels(self,intake_channel_list):
 		self.channel_list = intake_channel_list 
+
+	def bend_serial(self,serial_input):
+		self.instrum_serial = 'Bend_SN' + serial_input
 
 
 	def glob_search_csv(self):
@@ -77,8 +82,8 @@ class HEAT_Analysis():
 		self.file_list = glob.glob(glob_string,recursive = True)
 
 		### Find serial in sea of lies
-		delim_name = self.file_list[0][-13:-1]
-		delim_file = file_str.split('_')
+		delim_name = self.file_list[0]
+		delim_file = delim_name.split('_')
 		self.title = delim_file[-3]
 		
 
@@ -93,52 +98,57 @@ class HEAT_Analysis():
 		print('\n')
 		glob_prompt = input('\n (y) to continue, (n) to exit and go use a different script \n')
 		if glob_prompt == 'y':
-			continue
+			pass
 		else:
 			print(' \n Goodbye! \n')
 
 		return self.title
 
-	def pull_daq_channels(self):
+	def pull_daq_channels_live(self):
 		df = self.bigdf
 		# get a list of all column headers
 		headers = df.columns.tolist()
 		# create a sublist of headers containing the substring 'daq'
 		daq_headers = [header for header in headers if 'daq' in header]
-		print(daq_headers)
+
+		daq_headers = ['daq_ch7', 'daq_ch8', 'daq_ch9', 'daq_ch10', 'daq_ch11', 'daq_ch12', 'daq_ch19', 'daq_ch20', 'daq_ch21', 'daq_ch22', 'daq_ch23', 'daq_ch24', 'daq_ch25', 'daq_ch26', 'daq_ch27', 'daq_ch28', 'daq_ch29', 'daq_ch30', 'daq_ch37', 'daq_ch38', 'daq_ch39', 'daq_ch40', 'daq_ch41', 'daq_ch42']
+
+		user_chan_list = ['200C1', '150C1', '100C1', '50C1', '25C1', '10C1', '200A1', '150A1', '100A1', '50A1', '25A1', '10A1', '10A2', '25A2', '50A2', '100A2', '150A2', '200A2', '10C2', '25C2', '50C2', '100C2', '150C2', '200C2']
+		# if len(daq_headers) == 48:
+		# 	self.daq_list = daq_headers
+		# 	self.channel_list = ['200D', '150D', '100D', '50D', '25D', '10D', '200C1', '150C1', '100C1', '50C1', '25C1', '10C1', '200B1', '150B1', '100B1', '50B1', '25B1', '10B1', '200A1', '150A1', '100A1', '50A1', '25A1', '10A1', '10A2', '25A2', '50A2', '100A2', '150A2', '200A2', '10B2', '25B2', '50B1', '100B2', '150B2', '200B2', '10C2', '25C2', '50C2', '100C2', '150C2', '200C2', '200E', '150E', '100E', '50E', '25E', '10E']
+		# else:
+		# 	print('\n See the channel list below \n ')
+		# 	print(daq_headers)
+
+		# 	print('\n You will now assign each channel by hand \n')
+
+		# 	user_chan_list = []
+		# 	while True:
+		# 		for i in range(1,(len(daq_headers) + 1)):
+		# 			prompt_repeating = input('\n What was on channel DAQ' + str(i) + '? \n Formats: 150A2  25B1  200C2  50D  150E  (n if channel was unused) \n')
+		# 			user_chan_list.append(prompt_repeating)
+		# 			print(user_chan_list)
+
+		# 		prompt2 = input('\n Does this channel list match your sample? (y) or (n) \n')
+		# 		if prompt2 == 'y':
+		# 			print('Moving On')
+		# 			break
+		# 		elif prompt2 == 'n':
+		# 			user_chan_list = []
+		# 			continue
+		# 		else:
+		# 			user_chan_list = []
+		# 			print('Invalid Input. Restarting ')
 
 
-		if len(daq_headers) == 48:
+		#print('Lengths of lists')
+		#print(len(daq_headers) == len(user_chan_list))
+		if len(daq_headers) == len(user_chan_list):
 			self.daq_list = daq_headers
-			self.channel_list = ['200D', '150D', '100D', '50D', '25D', '10D', '200C1', '150C1', '100C1', '50C1', '25C1', '10C1', '200B1', '150B1', '100B1', '50B1', '25B1', '10B1', '200A1', '150A1', '100A1', '50A1', '25A1', '10A1', '10A2', '25A2', '50A2', '100A2', '150A2', '200A2', '10B2', '25B2', '50B1', '100B2', '150B2', '200B2', '10C2', '25C2', '50C2', '100C2', '150C2', '200C2', '200E', '150E', '100E', '50E', '25E', '10E']
+			self.channel_list = user_chan_list
 		else:
-			print('\n See the channel list below \n ')
-			print(daq_headers)
-
-			print('\n You will now assign each channel by hand \n')
-
-
-			user_chan_list = []
-			while True:
-				for i in range(1,(len(daq_headers) + 1)):
-					prompt_repeating = input('\n What was on channel DAQ' + str(i) + '? \n Formats: 150A2  25B1  200C2  50D  150E  \n')
-					user_chan_list.append(prompt_repeating)
-					print(user_chan_list)
-
-				prompt2 = input('\n Does this channel list match your sample? (y) or (n) \n')
-				if prompt2 == 'y':
-					print('Moving On')
-					break
-				elif prompt2 == 'n':
-					user_chan_list = []
-					continue
-				else:
-					user_chan_list = []
-					print('Invalid Input. Restarting ')
-
-			if len(daq_headers) == len(user_chan_list)
-				self.daq_list = daq_headers
-				self.channel_list = 
+			print('DAQ channels do not align!!!! This is a code error')
 
 
 	def find_first_row(self):
@@ -161,6 +171,8 @@ class HEAT_Analysis():
 					if j > 150:
 						break
 
+
+						
 	def create_bigdf_new(self):
 		# Initialize an empty dictionary to store the dataframes
 
@@ -172,29 +184,14 @@ class HEAT_Analysis():
 			
 			
 			# Then read from the next rows without joining the data
-			df = pd.read_csv(file,)
+			df = pd.read_csv(file,skiprows=1)
 
 
 			self.bigdf = pd.concat([self.bigdf,df])
 		#sort values incase something weird happens
-		self.bigdf = self.bigdf.sort_values(by=['sec_incr']).reset_index()
+		self.bigdf = self.bigdf.sort_values(by=['sec_incr']).reset_index(drop=True)
 		print(self.bigdf.shape)
-		print(self.bigdf)
-		sys.exit()
-
-		### At this point you have the raw data and its named, time to move it
-
-		### Keep these loops separate to not mess up work flow
-	
-		raw_dirs = self.dirs + 'Raw\\'
-		if os.path.exists(raw_dirs):
-			pass
-		else:
-			os.makedirs(raw_dirs)
-
-
-		for files in csv_files:
-			shutil.move(files,raw_dirs + files)
+		
 
 	def create_bigdf_old(self):
 		# Initialize an empty dictionary to store the dataframes
@@ -221,15 +218,15 @@ class HEAT_Analysis():
 
 		### Keep these loops separate to not mess up work flow
 	
-		raw_dirs = self.dirs + 'Raw\\'
-		if os.path.exists(raw_dirs):
-			pass
-		else:
-			os.makedirs(raw_dirs)
+		# raw_dirs = self.dirs + 'Raw\\'
+		# if os.path.exists(raw_dirs):
+		# 	pass
+		# else:
+		# 	os.makedirs(raw_dirs)
 
 
-		for files in csv_files:
-			shutil.move(files,raw_dirs + files)
+		# for files in csv_files:
+		# 	shutil.move(files,raw_dirs + files)
 
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
@@ -247,9 +244,12 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','bend_SN','bend_current_not_a_failure']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
+
+		print(self.daq_list)
+		print(self.channel_list)
 
 		title = self.title
 		date = self.timestamp
@@ -257,12 +257,23 @@ class HEAT_Analysis():
 
 		j=0
 		for i in self.daq_list:
-			smol_list = ['cycle'].append(i)
+			smol_list = ['cycle',i]
+			bend_current_val = smol_list
+			print(i)
+			#print(smol_list)
+			#print(self.bigdf.shape)
 
-			smold_df = self.bigdf[smol_list].copy()
+			smoldf = self.bigdf[smol_list].copy()
+			bend_current_val = smoldf['cycle'].iloc[-1]
 			# Create a rolling average
 			res_raw = smoldf[i]
-			
+			if smoldf[i].iloc[0:10].isnull().values.all():
+				print(str(i) + ' is empty! Skipping')
+				j = j + 1
+				continue
+
+
+			### Check if open on start
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j = j + 1
 				continue
@@ -286,11 +297,11 @@ class HEAT_Analysis():
 			if len(compare10p) < 5:
 				cycle_res10p = 'Did not reach limit'
 			else:			
-				cycle_res10p = compare10p['Cycle'].iloc[4]
+				cycle_res10p = compare10p['cycle'].iloc[4]
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,self.instrum_serial,bend_current_val]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -313,6 +324,7 @@ class HEAT_Analysis():
 
 
 		limit_df.loc[limit_df['shape'] == 'A','shape'] = 'straight'
+		limit_df.loc[limit_df['shape'] == 'B','shape'] = 'straight'
 		limit_df.loc[limit_df['shape'] == 'C','shape'] = 'serpentine'
 		limit_df.loc[limit_df['shape'] == 'E','shape'] = 'straight'
 		limit_df.loc[limit_df['shape'] == 'D','shape'] = 'serpentine'
@@ -364,18 +376,24 @@ class HEAT_Analysis():
 		graph_title = self.title + ': '
 
 
+
 		### Moving Average Plot
 		plt.rcParams['agg.path.chunksize'] = 10000
 		fig, (ax1,ax2) = plt.subplots(2,figsize=(30,20))
 		j = 0
 		print(self.channel_list)
-		for i in daq_list:
+		for i in self.daq_list:
+
+			if bigdf[i].iloc[0:10].isnull().values.all():
+				print(str(i) + ' is empty! Skipping')
+				j = j + 1
+				continue
 
 
 			# Create a rolling average
 			res_raw = bigdf[i]
 			res_avg = res_raw.rolling(window=mov_avg).mean()
-			cycle_count = bigdf['Cycle']
+			cycle_count = bigdf['cycle']
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j=j+1 # Open
 				continue
@@ -501,6 +519,7 @@ class HEAT_Analysis():
 		dfp=pd.read_parquet(parquet_file)
 		self.bigdf = dfp 
 		self.title = parquet_file[0:12] # Morteza wants 14
+		print(self.title)
 		self.dirs = self.title +'\\'
 		
 
@@ -509,10 +528,10 @@ class HEAT_Analysis():
 			pass
 		else:
 			os.makedirs(self.dirs)
-			try:
-				shutil.move(parquet_file,self.dirs + parquet_file)
-			except:
-				print('Could not move parquet file!!!')
+		# 	try:
+		# 		shutil.move(parquet_file,self.dirs + parquet_file)
+		# 	except:
+		# 		print('Could not move parquet file!!!')
 
 
 		return self.title,self.indicator
@@ -566,7 +585,6 @@ class HEAT_Analysis():
 
 	def end(self):
 		print('Finished!!')
-		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
 		sys.exit()
 ###################################################################
 
@@ -574,12 +592,17 @@ class HEAT_Analysis():
 def main():
 
 	h = HEAT_Analysis()
-	h.glob_search_csv()
-	h.create_bigdf_new()
 	print('\n Input the answer in the parenthesis \n  \n YOU PROBABLY NEED TO CLOSE THE CHROME MONSTER \n \n')
 
+	h.glob_search_csv()
+	#glob_par = glob.glob('**.parquet')
+	h.create_bigdf_new()
+	#h.save_df_to_parquet()
+	#h.read_parquet_file(glob_par[0])
+	h.pull_daq_channels_live()
+	
 	while True:
-		prompt1 = input('\n What type of Sampe is this? (Just select u, I do not want to refactor) \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
+		prompt1 = input('\n What type of Sample is this? (Just select u, I do not want to refactor) \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
 		if prompt1 == 'l':
 			s_type = '1L_copper_coupon'
 			alloy = 'Cu_RA'
@@ -658,6 +681,15 @@ def main():
 			print('Try again there buddy')
 
 
+	while True:
+		prompt32= input('\n Benderita Serial Number? (Format "01" or "12" \n')
+		if len(prompt32) == 2:
+			h.bend_serial(prompt32)
+			break
+		else:
+			print('Try again there buddy')
+
+
 
 	# h.assign_channels(user_chan_list)
 	
@@ -671,13 +703,13 @@ def main():
 	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
 	#h.append_limit_df_to_master()
 
-	h.plot_bigdf_moving_average()
+	#h.plot_bigdf_moving_average() ### Can't do this, 
 	#h.master_to_percentage_plt()
 	#h.master_v_trace_width()
 
-	#h.move_pngs()
+	h.move_pngs()
 	#h.move_to_Ndrive()
-	h.end()
+	#h.end()
 					
 
 

@@ -65,10 +65,14 @@ class HEAT_Analysis():
 		self.channel_list = None
 		self.dfs = None
 		self.names = None
+		self.instrum_serial = None
 
 
 	def assign_channels(self,intake_channel_list):
 		self.channel_list = intake_channel_list 
+
+	def bend_serial(self,serial_input):
+		self.instrum_serial = 'Bend_SN' + serial_input
 
 
 	def glob_search_csv(self):
@@ -129,15 +133,15 @@ class HEAT_Analysis():
 
 		### Keep these loops separate to not mess up work flow
 	
-		raw_dirs = self.dirs + 'Raw\\'
-		if os.path.exists(raw_dirs):
-			pass
-		else:
-			os.makedirs(raw_dirs)
+		# raw_dirs = self.dirs + 'Raw\\'
+		# if os.path.exists(raw_dirs):
+		# 	pass
+		# else:
+		# 	os.makedirs(raw_dirs)
 
 
-		for files in csv_files:
-			shutil.move(files,raw_dirs + files)
+		# for files in csv_files:
+		# 	shutil.move(files,raw_dirs + files)
 
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
@@ -155,7 +159,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','modulus_gpa','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','modulus_gpa','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','bend_serial','bend_current_not_a_failure']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -188,6 +192,7 @@ class HEAT_Analysis():
 		for i in daq_list:
 			# Create a rolling average
 			res_raw = smoldf[i]
+			bend_current_val = smoldf['cycle'].iloc[-1]
 			
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j = j + 1
@@ -221,7 +226,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,moduli,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,moduli,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,self.intrum_serial,bend_current_val]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -608,6 +613,15 @@ def main():
 		else:
 			user_chan_list = []
 			print('Invalid Input')
+
+	
+	while True:
+		prompt32= input('\n Benderita Serial Number? (Format "01" or "12" \n')
+		if len(prompt32) == 2:
+			h.bend_serial(prompt32)
+			break
+		else:
+			print('Try again there buddy')
 
 	h.assign_channels(user_chan_list)
 	h.glob_search_csv()
