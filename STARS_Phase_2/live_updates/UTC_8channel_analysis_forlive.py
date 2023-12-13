@@ -213,7 +213,7 @@ class HEAT_Analysis():
 
 			p30up = smoldf[i].iloc[0] * 1.3
 			p30_df = smoldf[smoldf[i] > p30up]
-			p30for10_lim = lim30for10(p30_df)	
+			p30for10_lim = lim30for10(p30_df)
 
 			res10p_lim = res_start + res_start * 0.1
 			

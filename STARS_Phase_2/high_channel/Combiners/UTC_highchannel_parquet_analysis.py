@@ -343,7 +343,8 @@ class HEAT_Analysis():
 
 	def append_limit_df_to_master(self):
 		### Find master csv
-		npre = 'N:\\STARS2_test_data\\master\\'
+		#npre = 'N:\\STARS2_test_data\\master\\'
+		npre = 'N:\\users\\Brandon\\STARS2\\master\\'
 		masname = 'STARS2_Unified_FPC_Bend_Master.csv'
 		oldname = npre + 'old\\' +  self.mini_timestamp + masname
 
@@ -707,7 +708,7 @@ def main():
 	#h.master_v_trace_width()
 
 	h.move_pngs()
-	h.move_to_Ndrive()
+	#h.move_to_Ndrive()
 	#h.end()
 					
 

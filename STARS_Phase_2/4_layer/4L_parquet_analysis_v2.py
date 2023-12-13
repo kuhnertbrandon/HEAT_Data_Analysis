@@ -18,14 +18,14 @@ def lim30for10(df):
 	for index,row in df.iterrows():
 		if in_last == None: ## Establish the index and cycle last
 			in_last = index
-			cyc_start = row['Cycle']
+			cyc_start = row['cycle']
 
 		track = index - in_last
 
 		if track > 1.1:                    # See if we pull data below limit
-			cyc_start = row['Cycle']
+			cyc_start = row['cycle']
 
-		cyc_now = row['Cycle']             #Grab Current cycle
+		cyc_now = row['cycle']             #Grab Current cycle
 		cyc_diff = cyc_now - cyc_start
 
 		if cyc_diff >= 10:                 #Break if you the data has remained above for 10 cycles
@@ -65,23 +65,37 @@ class HEAT_Analysis():
 		self.channel_list = None
 		self.dfs = None
 		self.names = None
+		self.daq_list = None
 
 
 	def assign_channels(self,intake_channel_list):
 		self.channel_list = intake_channel_list 
 
 
-
 	def glob_search_csv(self):
 		glob_string = '**.csv' # this generic one will just find all csv's 
 		self.file_list = glob.glob(glob_string,recursive = True)
-		self.title = self.file_list[0][0:12]
+		
+		delim_name = self.file_list[0]
+		delim_file = delim_name.split('_')
+		#self.title = delim_file[-3]
+		self.title = delim_file[-6] + '-' +delim_file[-5] + '-' + delim_file[-4] +'-'+ delim_file[-3]
 
 		self.dirs = self.title +'\\'
 		if os.path.exists(self.dirs):
 			pass
 		else:
 			os.makedirs(self.dirs)
+
+		print('\n')
+		print(self.title)
+		print('\n')
+		glob_prompt = input('\n (y) to continue, (n) to exit and go use a different script \n')
+		if glob_prompt == 'y':
+			pass
+		else:
+			print(' \n Goodbye! \n')
+			sys.exit()
 
 		return self.title
 
@@ -105,7 +119,7 @@ class HEAT_Analysis():
 					if j > 150:
 						break
 
-	def create_bigdf(self):
+	def create_bigdf_old(self):
 		# Initialize an empty dictionary to store the dataframes
 
 		csv_files = self.file_list
@@ -124,11 +138,47 @@ class HEAT_Analysis():
 
 			self.bigdf = pd.concat([self.bigdf,df])
 		#sort values incase something weird happens
-		self.bigdf = self.bigdf.sort_values(by=['Time (Seconds)'])
+		self.bigdf = self.bigdf.sort_values(by=['Time (Seconds)']).reset_index(drop=True)
 
 			### At this point you have the raw data and its named, time to move it
 
 		### Keep these loops separate to not mess up work flow
+	
+		raw_dirs = self.dirs + 'Raw\\'
+		if os.path.exists(raw_dirs):
+			pass
+		else:
+			os.makedirs(raw_dirs)
+
+
+		# for files in csv_files:
+		# 	shutil.move(files,raw_dirs + files)
+
+	def create_bigdf_new(self):
+		# Initialize an empty dictionary to store the dataframes
+
+		csv_files = self.file_list
+		
+		self.bigdf = pd.DataFrame()
+		# Loop through each CSV file and convert it to a pandas dataframe
+		for file in csv_files:
+			
+			
+			# Then read from the next rows without joining the data
+			df = pd.read_csv(file,skiprows=1)
+
+
+			self.bigdf = pd.concat([self.bigdf,df])
+		#sort values incase something weird happens
+		self.bigdf = self.bigdf.sort_values(by=['sec_incr']).reset_index(drop=True)
+		print(self.bigdf.shape)
+		
+
+		### At this point you have the raw data and its named, time to move it
+
+		### Keep these loops separate to not mess up work flow 
+
+		### Wayyy too much raw data, just moving parquets now
 	
 		# raw_dirs = self.dirs + 'Raw\\'
 		# if os.path.exists(raw_dirs):
@@ -154,33 +204,35 @@ class HEAT_Analysis():
 			shutil.move(files,self.dirs + files)
 
 
-	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
+	def create_limitdf(self,rod_diameter,maker,encapsulation,daq_style,back,shape):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','alloy','modulus_gpa','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','date','manufacturer','encapsulation','backing','shape','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
 		title = self.title
 		date = self.timestamp
-		daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
 		
 		
+
+
+		if daq_style =='8':
+			daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
+			sample_list = ['hg_s_l3_l','sg_s_l3_l','hg_s_l2_l','sg_s_l2_l','hg_c_l3_l','sg_c_l3_l','hg_c_l2_l','sg_c_l2_l']
+			cycle_list = ['cycle']
+		elif daq_style == '16':
+			daq_list = ['daq_ch1', 'daq_ch2', 'daq_ch3', 'daq_ch4', 'daq_ch5', 'daq_ch6', 'daq_ch7', 'daq_ch8', 'daq_ch9', 'daq_ch10', 'daq_ch11', 'daq_ch12', 'daq_ch13', 'daq_ch14', 'daq_ch15', 'daq_ch16']
+			sample_list = ['hg_s_l3_l','hg_s_l3_r','sg_s_l3_l','sg_s_l3_r','hg_s_l2_l','hg_s_l2_r','sg_s_l2_l','sg_s_l2_r','hg_c_l3_l','hg_c_l3_r','sg_c_l3_l','sg_c_l3_r','hg_c_l2_l','hg_c_l2_r','sg_c_l2_l','sg_c_l2_r']
+			cycle_list = ['cycle']
+		else:
+			print('daq number not reqcognized')
 		
 
 		bigdf = self.bigdf
-		#### Omars Limit work
-		f_100_cycles = bigdf[bigdf['Cycle'] <= 100]
-		last = f_100_cycles['Cycle'].iloc[0]
-		f_100_list = bigdf.columns.tolist()
-		tops = f_100_cycles.iloc[0]
-		for index,row in f_100_cycles.iterrows():
-			if row['Cycle'] > last and (row['Cycle'] % 1) == 0.5:
-				tops = pd.concat([tops,row])
-				last = row['Cycle']
 		
 
 		#shrink the df
-		small_list = ['Cycle'] + daq_list
+		small_list = cycle_list + daq_list
 		smoldf = bigdf[small_list].copy()
 		bigdf = None
 
@@ -198,12 +250,6 @@ class HEAT_Analysis():
 				strain = rod_diameter + 'mm_bend'
 			else:
 				strain = str(rod_diameter) + 'mm_bend'
-
-			### Omar's limit
-			omars_start = tops[i].mean()
-			omars_10p = omars_start * 1.1
-			omars_50p = omars_start * 1.5	
-			
 			
 			res_start = smoldf[i].iloc[0]
 
@@ -218,58 +264,73 @@ class HEAT_Analysis():
 			if len(compare10p) < 5:
 				cycle_res10p = 'Did not reach limit'
 			else:			
-				cycle_res10p = compare10p['Cycle'].iloc[4]
+				cycle_res10p = compare10p['cycle'].iloc[4]
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,material,moduli,self.channel_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
-							   columns=limit_columns )
+			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
+		limit_df = limit_df.reset_index(drop=True)
 
-		### Add more columns to df
-		limit_df['shape'] = limit_df['trace'].str.extract(r'([A-Z]+)')
-		limit_df['width'] = limit_df['trace'].str.extract(r'(\d+)')
 
-		limit_df['array'] = limit_df['trace'].str[-2:]
+		trace_df = limit_df['trace'].to_frame().reset_index(drop=True)
+		expanded_df = trace_df['trace'].str.split('_',expand=True)
+		expanded_df = expanded_df.rename(columns={0:'ground',1:'co-planar',2:'layer',3:'loop_postion'})
 
-		def capitalize_letters(row):
-			if row['shape'] == 'D' or row['shape'] == 'E':
-				return row['shape']
+
+		def ground_tranform(row):
+			if row['ground'] == 'hg':
+				return 'hatched ground'
 			else:
-				return row['array']
+				return 'solid ground'
 
-		limit_df['array'] = limit_df.apply(capitalize_letters, axis=1)
+		expanded_df['ground'] = expanded_df.apply(ground_tranform, axis=1)
+
+		def planar_tranform(row):
+			if row['co-planar'] == 's':
+				return 'stripline'
+			else:
+				return 'co-planar'
+
+		expanded_df['co-planar'] = expanded_df.apply(planar_tranform, axis=1)
+
+		def layer_tranform(row):
+			if row['layer'] == 'l3':
+				return 'layer 3'
+			else:
+				return 'layer 2'
+
+		expanded_df['layer'] = expanded_df.apply(layer_tranform, axis=1)
+
+		def loop_tranform(row):
+			if row['loop_postion'] == 'l':
+				return 'left'
+			else:
+				return 'right'
+
+		expanded_df['loop_position'] = expanded_df.apply(loop_tranform, axis=1)
+
+		
+		limit_df = pd.concat([limit_df,expanded_df],axis=1)
 
 
-
-		limit_df.loc[limit_df['shape'] == 'A','shape'] = 'straight'
-		limit_df.loc[limit_df['shape'] == 'C','shape'] = 'serpentine'
-		limit_df.loc[limit_df['shape'] == 'E','shape'] = 'straight'
-		limit_df.loc[limit_df['shape'] == 'D','shape'] = 'serpentine'
-
-
-		limit_df['width'] = pd.to_numeric(limit_df['width'])
-		limit_df['radius'] = limit_df['strain_p'].str[0:1]
-		limit_df['radius'] = pd.to_numeric(limit_df['radius'])
-		limit_df['channel'] = limit_df['physical_position'].str[-1]
-		limit_df['channel'] = pd.to_numeric(limit_df['channel'])
 
 		# save Limit df
-		limit_name =self.title + '_limits_live.csv'
+		limit_name =self.title + '_limits.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
+		self.daq_list = daq_list
 		
 		self.limit_df = limit_df
 
 	def append_limit_df_to_master(self):
 		### Find master csv
-		#npre = 'N:\\STARS2_test_data\\master\\'
-		npre = 'N:\\users\\Brandon\\STARS2\\master\\'
-		masname = 'STARS2_Unified_FPC_Bend_Master.csv'
-		oldname = npre + 'old\\' +  self.mini_timestamp + masname
+		npre = 'N:\\4L_test_data\\master\\'
+		masname = '4L_Bend_Master.csv'
+		oldname = npre + 'old\\' +  self.mini_timestamp +'_' +  masname
 
 		self.master_path = npre
 
@@ -295,8 +356,7 @@ class HEAT_Analysis():
 		if mov_avg < 3:
 			mov_avg = 3
 		graph_title = self.title + ': '
-		daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
-
+		daq_list = self.daq_list
 			
 	 
 
@@ -312,7 +372,7 @@ class HEAT_Analysis():
 			# Create a rolling average
 			res_raw = bigdf[i]
 			res_avg = res_raw.rolling(window=mov_avg).mean()
-			cycle_count = bigdf['Cycle']
+			cycle_count = bigdf['cycle']
 			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
 				j=j+1 # Open
 				continue
@@ -341,103 +401,11 @@ class HEAT_Analysis():
 		print('\n Raw cycle plot created')
 
 
-	def master_to_percentage_plt(self):
-		df = self.master_df
-		
-		names = ['10 %','30 %']
-		trace_widths = [10,25,50,100,150,200]
-		
-		df['shape'] = df['trace'].str.extract(r'([A-Z]+)')
-		df['width'] = df['trace'].str.extract(r'(\d+)')
-		df.loc[df['shape'] == 'A','shape'] = 'straight'
-		df.loc[df['shape'] == 'C','shape'] = 'serpentine'
-		df['width'] = pd.to_numeric(df['width'])
-		
-		for j in trace_widths:
-			
-			tdf = df[df['width'] == j]
-			if tdf.size <2:
-				continue
-			
-			dfst = tdf[tdf['shape'] == 'straight'].reset_index(drop=True)
-			dfse =tdf[tdf['shape'] == 'serpentine'].reset_index(drop=True)
-			dfs = [dfst,dfse]
-
-
-
-			for name in names:
-				fig, ax = plt.subplots(figsize=(20,15))
-				if name == '10 %':
-					x_col = '10_p_increase_cycles'
-					save = '10p'
-				elif name == '30 %':
-					x_col = '30_p_increase_for_10_cycles'
-					save = '30p_for_10'
-				for i in dfs:
-					dft = i.sort_values(by=[x_col]).reset_index(drop=True)
-					dft_top = dft.index[-1]
-					dft['percentage'] = np.round(dft.index/dft_top*100,2)
-					ax.plot(dft[x_col],dft['percentage'],'--o',markersize=15)
-
-				ax.legend(['Straight','Serpentine'],fancybox=True,framealpha=1,fontsize=22)
-
-				ax.set_ylabel('Percentage Failed',fontsize=22)
-				ax.set_title('Cycles vs Percent Population Failed '+ name + ': Trace Width: '+ str(j) +' (um) '+ self.pretty_timestamp,fontsize=28)
-				ax.set_xlabel('Cycles',fontsize=22)
-				ax.set_yticks(range(0,110,10))
-				ax.yaxis.grid(which='major',linestyle='--')
-				ax.tick_params(axis='both', which='major', labelsize=18)
-				ax.set_xlim(left=0)
-				fig.savefig(self.dirs + save + '_tw' +str(j) +'_increase_percentPop' + self.timestamp+'.jpg')
-
-	def master_v_trace_width(self):
-			df = self.master_df
-		
-			names = ['10 %','30 %']
-			
-			
-			df['shape'] = df['trace'].str.extract(r'([A-Z]+)')
-			df['width'] = df['trace'].str.extract(r'(\d+)')
-			df.loc[df['shape'] == 'A','shape'] = 'straight'
-			df.loc[df['shape'] == 'C','shape'] = 'serpentine'
-			df['width'] = pd.to_numeric(df['width'])
-
-			dfst = df[df['shape'] == 'straight'].reset_index(drop=True)
-			dfse =df[df['shape'] == 'serpentine'].reset_index(drop=True)
-			dfs = [dfst,dfse]
-
-			for name in names:
-				fig, ax = plt.subplots(figsize=(20,15))
-				if name == '10 %':
-					y_col = '10_p_increase_cycles'
-					save = '10p'
-				elif name == '30 %':
-					y_col = '30_p_increase_for_10_cycles'
-					save = '30p_for_10'
-				for i in dfs:
-					dft = i.sort_values(by=[y_col]).reset_index(drop=True)
-					dft_top = dft.index[-1]
-					dft['percentage'] = np.round(dft.index/dft_top*100,2)
-					ax.scatter(pd.to_numeric(dft['width']),dft[y_col],s=150)
-
-
-				ax.legend(['Straight','Serpentine'],fancybox=True,framealpha=1,fontsize=22)
-
-				ax.set_ylabel('Cycles',fontsize=22)
-				ax.set_title('Cycles vs Trace Width ' + name+  ' '+ self.pretty_timestamp,fontsize=28) #+ name+ ': '+ pretty_timestamp
-				ax.set_xlabel('Trace Width (microns)',fontsize=22)
-				ax.set_xticks(range(0,275,25))
-				ax.xaxis.grid(which='major',linestyle='--')
-				ax.tick_params(axis='both', which='major', labelsize=22)
-				ax.set_xlim(0,250)
-				ax.set_xlim(left=0)
-				fig.savefig(self.dirs + save +'_cycles_v_tw' + self.timestamp+'.jpg')
-
-
 	def read_parquet_file(self,parquet_file):
 		dfp=pd.read_parquet(parquet_file)
 		self.bigdf = dfp 
-		self.title = parquet_file[0:12] # Morteza wants 14
+		self.title = parquet_file[0:18] # Morteza wants 14
+		print(self.title)
 		self.dirs = self.title +'\\'
 		
 
@@ -446,13 +414,14 @@ class HEAT_Analysis():
 			pass
 		else:
 			os.makedirs(self.dirs)
-			try:
-				shutil.move(parquet_file,self.dirs + parquet_file)
-			except:
-				print('Could not move parquet file!!!')
+		# 	try:
+		# 		shutil.move(parquet_file,self.dirs + parquet_file)
+		# 	except:
+		# 		print('Could not move parquet file!!!')
 
 
 		return self.title,self.indicator
+
 
 
 	def save_df_to_parquet(self):
@@ -484,7 +453,7 @@ class HEAT_Analysis():
 
 	def move_to_Ndrive(self):
 		## Check if they have N drive mapped 
-		Ndrive_prefix = 'N:\\STARS2_test_data\\'
+		Ndrive_prefix = 'N:\\4L_test_data\\'
 		if os.path.exists(Ndrive_prefix):
 			pass
 		else:
@@ -499,11 +468,12 @@ class HEAT_Analysis():
 		else:
 			shutil.copytree(self.dirs, n_path)
 			print('\n Backed up to N drive \n')
+		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
 
 
 	def end(self):
 		print('Finished!!')
-		print('HEAT STARS analysis complete. \n Files can be found in the folder you ran this and they are backed up on the Ndrive')
+		
 		sys.exit()
 ###################################################################
 
@@ -512,129 +482,102 @@ def main():
 
 	h = HEAT_Analysis()
 	print('\n Input the answer in the parenthesis \n')
-		#h.glob_search_csv()
+	#h.glob_search_csv()
 	glob_par = glob.glob('**.parquet')
 	#h.create_bigdf_new()
 	#h.save_df_to_parquet()
 	h.read_parquet_file(glob_par[0])
-	
+
 
 	while True:
-		prompt1 = input('\n What type of Sampe is this? (Just select u, I do not want to refactor) \n (l) for 1L Unified Copper \n (u) Unified Coupon 2.0 \n (4) for 4L Copper Coupon \n')
-		if prompt1 == 'l':
-			s_type = '1L_copper_coupon'
-			alloy = 'Cu_RA'
+		prompt1 = input('\n What size bend rod was used? \n')
+		if prompt1 == '7':
+			rod_d = prompt1
+			break
+		elif prompt1 == '5':
+			rod_d = prompt1
+			break
+		elif prompt1 == '4':
+			rod_d = prompt1
+			break
+		elif prompt1 == '3':
+			rod_d = prompt1
+			break
+		else:
+			print('Only 3, 4, 5, and 7 have been tested')
+
+	while True:
+		prompt2 = input('\n Manufacturer? \n (i) In-House (RDL) \n (a) Altaflex \n')
+		if prompt2 == 'i':
+			manufacturer = 'In-house'
+			break
+		elif prompt2 == 'a':
 			manufacturer = 'Altaflex'
 			break
-		elif prompt1 == 'u':
-			s_type = 'unified_coupon'
-			prompt17 = input('\n Manufacturer? \n (c) Carlisle \n (a) Altaflex \n')
-			if prompt17 == 'c':
-				manufacturer = 'Carlisle'
-			elif prompt17 == 'a':
-				manufacturer = 'Altaflex'
-			else:
-				print('not an option')
-				continue
-
-			
-			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n (cs) CuSn6 \n')
-			if prompt18 == 'c':
-				alloy = 'Cu_RA'
-				break
-			elif prompt18 == 'o':
-				alloy = 'Cu_O2_free'
-				break
-			elif prompt18 == 'cn':
-				alloy = 'CuNi3Si'
-				break
-			elif prompt18 == 'cz':
-				alloy = 'CuZn30'
-				break
-			elif prompt18 == 'cc':
-				alloy = 'CuCrZr'
-				break
-			elif prompt18 == 'cm':
-				alloy = 'CuMgAgP'
-				break
-			elif prompt18 == 'cs':
-				alloy = 'CuSn6'
-				break
-			else:
-				print('Try again there bud')
-				continue
-
-
-	while True:
-		prompt11 = input('\n What size bend rod was used? \n')
-		if prompt11 == '7':
-			rod_d = prompt11
-			break
-		elif prompt11 == '3':
-			rod_d = prompt11
-			break
 		else:
-			print('Only 3 and 7 have been tested')
+			print('not an option')
 
 	while True:
-		prompt21 = input('\n Coverlay? (y) or (n)\n')
-		if prompt21 == 'y':
-			c_lay = 'Y'
-			break
-		elif prompt21 == 'n':
-			c_lay = 'N'
-			break
-		else:
-			print('Try again there buddy')
-
-	while True:
-		prompt22= input('\n Dupont or Panasonic Polyimide? (d) or (p)\n')
-		if prompt22 == 'd':
-			modulus = 4.8
+		prompt22 = input('\n Cut-out? \n (c) Cut-out \n (p) Polyimide-Backing \n')
+		if prompt22 == 'c':
+			backplane = 'cut-out'
 			break
 		elif prompt22 == 'p':
-			modulus = 7.1
+			backplane = 'polyimide'
 			break
 		else:
-			print('Try again there buddy')
+			print('not an option')
 
 
-	user_chan_list = []
 	while True:
-		for i in range(1,9):
-			prompt_repeating = input('\n What was on channel DAQ' + str(i) + '? \n')
-			user_chan_list.append(prompt_repeating)
-			print(user_chan_list)
-
-		prompt2 = input('\n Does this channel list match your sample? (y) or (n) \n')
-		if prompt2 == 'y':
-			print('Moving On')
+		prompt3 = input('\n Shape? \n (t) Straight \n (p) Serp \n')
+		if prompt3 == 't':
+			shape = 'straight'
 			break
-		elif prompt2 == 'n':
-			user_chan_list = []
-			continue
+		elif prompt3 == 'p':
+			shape = 'serpentine' #comment
+			break
 		else:
-			user_chan_list = []
-			print('Invalid Input')
+			print('Try again there bud')
+
+	while True:
+		prompt4 =input('\n Encapsulation? \n (y) yes or (n) no \n')
+		if prompt4 =='y':
+			encap = 'Y'
+			break
+		elif prompt4 =='n':
+			encap = 'N'
+			break
+		else:
+			print('Try again there bud')
+
+	while True:
+		prompt5 = input('\n 8 or 16 channel? \n (8) or (16) \n ')
+		if prompt5 == '8' or prompt5 =='16':
+			daq_number = prompt5
+			break
+		else:
+			print('Try again there bud')
 
 
-	
-	# h.glob_search_csv()
-	# h.find_first_row()
-	# h.create_bigdf()
-	h.plot_bigdf_moving_average()
-	h.assign_channels(user_chan_list)
+
+	### Run standard functions
+	#h.find_first_row()
+	#h.create_bigdf_new()
+	#h.save_df_to_parquet()
 
 	# Create and append limit	
-	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
-	#h.append_limit_df_to_master()
+	h.create_limitdf(rod_d,manufacturer,encap,daq_number,backplane,shape)
+	
+	
+	h.append_limit_df_to_master()
 
-
+	#h.plot_bigdf_moving_average()
 	#h.master_to_percentage_plt()
 	#h.master_v_trace_width()
 
-	#h.move_pngs()
-	#h.move_to_Ndrive()
+	h.move_pngs()
+	h.move_to_Ndrive()
 	h.end()
 					
 
@@ -643,3 +586,6 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+
+	### J1 to J1
