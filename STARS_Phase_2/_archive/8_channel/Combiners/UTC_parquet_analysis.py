@@ -257,7 +257,7 @@ class HEAT_Analysis():
 		limit_df['channel'] = pd.to_numeric(limit_df['channel'])
 
 		# save Limit df
-		limit_name =self.title + '_limits_live.csv'
+		limit_name =self.title + '_limits.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
@@ -622,12 +622,12 @@ def main():
 	# h.glob_search_csv()
 	# h.find_first_row()
 	# h.create_bigdf()
-	h.plot_bigdf_moving_average()
+	#h.plot_bigdf_moving_average()
 	h.assign_channels(user_chan_list)
 
 	# Create and append limit	
 	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
-	#h.append_limit_df_to_master()
+	h.append_limit_df_to_master()
 
 
 	#h.master_to_percentage_plt()
