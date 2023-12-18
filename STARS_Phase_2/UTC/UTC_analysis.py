@@ -679,12 +679,12 @@ def main():
 				continue
 
 			
-			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n (cs) CuSn6 \n')
+			prompt18 = input('\n Alloy? \n (c) Cu_ED \n (o) Cu_RA_O2F \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n (cs) CuSn6 \n')
 			if prompt18 == 'c':
-				alloy = 'Cu_RA'
+				alloy = 'Cu_ED'
 				break
 			elif prompt18 == 'o':
-				alloy = 'Cu_O2_free'
+				alloy = 'Cu_RA_O2F'
 				break
 			elif prompt18 == 'cn':
 				alloy = 'CuNi3Si'
