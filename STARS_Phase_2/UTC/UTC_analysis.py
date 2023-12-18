@@ -42,31 +42,31 @@ def lim30for10(df):
 	return cycle_fail
 
 def lim10for5samp(df):
-    cycle_fail = None
-    in_last = None
-    for index,row in df.iterrows():
-        if in_last == None: ## Establish the index and cycle last
-            in_last = index
-            in_start = index
-    
-        track = index - in_last
-    
-        if track > 1.1:                    # See if we pull data below limit
-            in_start = index
-    
-        in_now = index            #Grab Current index
-        in_diff = in_now - in_start
-    
-        if in_diff >= 5:                 #Break if you the data has remained above for 10 cycles
-            cycle_fail = row['cycle']
-            break
-    
-        in_last = index
-    
-    if cycle_fail == None:
-        cycle_fail = 'Did not reach limit'
-    
-    return cycle_fail
+	cycle_fail = None
+	in_last = None
+	for index,row in df.iterrows():
+		if in_last == None: ## Establish the index and cycle last
+			in_last = index
+			in_start = index
+	
+		track = index - in_last
+	
+		if track > 1.1:                    # See if we pull data below limit
+			in_start = index
+	
+		in_now = index            #Grab Current index
+		in_diff = in_now - in_start
+	
+		if in_diff >= 5:                 #Break if you the data has remained above for 10 cycles
+			cycle_fail = row['cycle']
+			break
+	
+		in_last = index
+	
+	if cycle_fail == None:
+		cycle_fail = 'Did not reach limit'
+	
+	return cycle_fail
 
 
 
@@ -281,7 +281,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','max_cycle_for_test','opens_prior_to_lowest','shorts_prior_to_lowest']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','max_cycle_for_test'] #,'opens_prior_to_lowest','shorts_prior_to_lowest']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -336,11 +336,11 @@ class HEAT_Analysis():
 		 #        df_opens1 = smoldf[smoldf['cycle'] <= bend_max]
 		 #    else:
 		 #        df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
-		    # df_opens = df_opens1[df_opens1[i] >= 100]
-		    # opens_b4 = df_opens.shape[0]
-		    
-		    # df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
-		    # shorts_b4 = df_shorts.shape[0]
+			# df_opens = df_opens1[df_opens1[i] >= 100]
+			# opens_b4 = df_opens.shape[0]
+			
+			# df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
+			# shorts_b4 = df_shorts.shape[0]
 
 			res10p_lim = res_start + res_start * 0.1
 			
