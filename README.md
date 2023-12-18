@@ -29,8 +29,6 @@ SOP for paused runs
 ![image](https://github.com/kuhnertbrandon/HEAT_Data_Analysis/assets/124308664/f5872ec4-4bb4-406a-a0e4-929db2173f86)
 
 
-live data SOPs
-1. Follow same flow as above using only scripts from the live repository
 
 
 
