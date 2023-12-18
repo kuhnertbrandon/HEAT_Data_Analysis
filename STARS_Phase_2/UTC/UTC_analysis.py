@@ -311,7 +311,7 @@ class HEAT_Analysis():
 
 
 			### Check if open on start
-			if res_raw.iloc[0] < 0.0 or res_raw.iloc[0]>110:
+			if smoldf.iloc[0] < 0.0 or smoldf.iloc[0]>110:
 				j = j + 1
 				continue
 
