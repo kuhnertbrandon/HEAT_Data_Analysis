@@ -12,6 +12,8 @@ import shutil
 import re
 
 
+
+#### Limit functions
 def lim30for10(df):
 	cycle_fail = None
 	in_last = None
@@ -38,6 +40,33 @@ def lim30for10(df):
 		cycle_fail = 'Did not reach limit'
 
 	return cycle_fail
+
+def lim10for5samp(df):
+    cycle_fail = None
+    in_last = None
+    for index,row in df.iterrows():
+        if in_last == None: ## Establish the index and cycle last
+            in_last = index
+            in_start = index
+    
+        track = index - in_last
+    
+        if track > 1.1:                    # See if we pull data below limit
+            in_start = index
+    
+        in_now = index            #Grab Current index
+        in_diff = in_now - in_start
+    
+        if in_diff >= 5:                 #Break if you the data has remained above for 10 cycles
+            cycle_fail = row['cycle']
+            break
+    
+        in_last = index
+    
+    if cycle_fail == None:
+        cycle_fail = 'Did not reach limit'
+    
+    return cycle_fail
 
 
 
@@ -252,7 +281,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','max_cycle_for_test','opens_prior_to_lowest','shorts_prior_to_lowest']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -263,6 +292,8 @@ class HEAT_Analysis():
 		date = self.timestamp
 		#daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
 
+		bend_max_cyc = self.bigdf['cycle'].iloc[-1]
+
 		j=0
 		for i in self.daq_list:
 			smol_list = ['cycle',i]
@@ -271,8 +302,8 @@ class HEAT_Analysis():
 			#print(self.bigdf.shape)
 
 			smoldf = self.bigdf[smol_list].copy()
-			# Create a rolling average
-			res_raw = smoldf[i]
+
+			### All skipping function
 			if smoldf[i].iloc[0:10].isnull().values.all():
 				print(str(i) + ' is empty! Skipping')
 				j = j + 1
@@ -280,7 +311,7 @@ class HEAT_Analysis():
 
 
 			### Check if open on start
-			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
+			if res_raw.iloc[0] < 0.0 or res_raw.iloc[0]>110:
 				j = j + 1
 				continue
 
@@ -296,6 +327,21 @@ class HEAT_Analysis():
 			p30_df = smoldf[smoldf[i] > p30up]
 			p30for10_lim = lim30for10(p30_df)	
 
+			#### Code for the improved 10 percent limit
+			# p10up = res_start * 1.1
+		 #    p10_df = smoldf[smoldf[i] > p10up]
+		 #    p10for5_lim = lim10for5samp(p10_df)
+
+		 #    if p10for5_lim == 'Did not reach limit':
+		 #        df_opens1 = smoldf[smoldf['cycle'] <= bend_max]
+		 #    else:
+		 #        df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
+		    # df_opens = df_opens1[df_opens1[i] >= 100]
+		    # opens_b4 = df_opens.shape[0]
+		    
+		    # df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
+		    # shorts_b4 = df_shorts.shape[0]
+
 			res10p_lim = res_start + res_start * 0.1
 			
 				
@@ -307,7 +353,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,bend_max_cyc]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -343,12 +389,16 @@ class HEAT_Analysis():
 		limit_df['channel'] = pd.to_numeric(limit_df['channel'])
 
 		# save Limit df
-		limit_name =self.title + '_limits.csv'
+		limit_name = self.title + '_limits.csv'
+
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
 		
 		self.limit_df = limit_df
+
+
+		
 
 	def append_limit_df_to_master(self):
 		### Find master csv
@@ -664,8 +714,11 @@ def main():
 		elif prompt11 == '3':
 			rod_d = prompt11
 			break
+		elif prompt11 == '5':
+			rod_d = prompt11
+			break
 		else:
-			print('Only 3 and 7 have been tested')
+			print('Only 3, 5, and 7 have been tested')
 
 	while True:
 		prompt21 = input('\n Coverlay? (y) or (n)\n')
