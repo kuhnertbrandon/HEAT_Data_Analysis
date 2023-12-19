@@ -708,8 +708,11 @@ def main():
 		elif prompt11 == '3':
 			rod_d = prompt11
 			break
+		elif prompt11 == '5':
+			rod_d = prompt11
+			break
 		else:
-			print('Only 3 and 7 have been tested')
+			print('Only 3, 5, and 7 have been tested')
 
 	while True:
 		prompt21 = input('\n Coverlay? (y) or (n)\n')

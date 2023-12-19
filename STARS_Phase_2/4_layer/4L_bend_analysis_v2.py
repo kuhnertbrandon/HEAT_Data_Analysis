@@ -79,7 +79,7 @@ class HEAT_Analysis():
 		delim_name = self.file_list[0]
 		delim_file = delim_name.split('_')
 		#self.title = delim_file[-3]
-		self.title =  delim_file[-3]
+		self.title = delim_file[-5] + '-' + delim_file[-4] + '-' + delim_file[-3]
 
 		self.dirs = self.title +'\\'
 		if os.path.exists(self.dirs):
