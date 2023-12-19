@@ -40,6 +40,32 @@ def lim30for10(df):
 	return cycle_fail
 
 
+def lim10for5samp(df):
+	cycle_fail = None
+	in_last = None
+	for index,row in df.iterrows():
+		if in_last == None: ## Establish the index and cycle last
+			in_last = index
+			in_start = index
+	
+		track = index - in_last
+	
+		if track > 1.1:                    # See if we pull data below limit
+			in_start = index
+	
+		in_now = index            #Grab Current index
+		in_diff = in_now - in_start
+	
+		if in_diff >= 5:                 #Break if you the data has remained above for 10 cycles
+			cycle_fail = row['cycle']
+			break
+	
+		in_last = index
+	
+	if cycle_fail == None:
+		cycle_fail = 'Did not reach limit'
+	
+	return cycle_fail
 
 class HEAT_Analysis():
 	def __init__(self):
@@ -239,9 +265,11 @@ class HEAT_Analysis():
 			shutil.move(files,self.dirs + files)
 
 
+
+
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','bend_SN','bend_current_not_a_failure']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','max_cycle_for_test'] #,'opens_prior_to_lowest','shorts_prior_to_lowest']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -252,18 +280,18 @@ class HEAT_Analysis():
 		date = self.timestamp
 		#daq_list = ['DAQ1','DAQ2','DAQ3','DAQ4','DAQ5','DAQ6','DAQ7','DAQ8']
 
+		bend_max_cyc = self.bigdf['cycle'].iloc[-1]
+
 		j=0
 		for i in self.daq_list:
 			smol_list = ['cycle',i]
-			bend_current_val = smol_list
 			print(i)
 			#print(smol_list)
 			#print(self.bigdf.shape)
 
 			smoldf = self.bigdf[smol_list].copy()
-			bend_current_val = smoldf['cycle'].iloc[-1]
-			# Create a rolling average
-			res_raw = smoldf[i]
+
+			### All skipping function
 			if smoldf[i].iloc[0:10].isnull().values.all():
 				print(str(i) + ' is empty! Skipping')
 				j = j + 1
@@ -271,7 +299,7 @@ class HEAT_Analysis():
 
 
 			### Check if open on start
-			if res_raw.iloc[0] < 0.0 or res_raw.iloc[4]>110:
+			if smoldf[i].iloc[0] < 0.0 or smoldf[i].iloc[0]>110:
 				j = j + 1
 				continue
 
@@ -287,6 +315,21 @@ class HEAT_Analysis():
 			p30_df = smoldf[smoldf[i] > p30up]
 			p30for10_lim = lim30for10(p30_df)	
 
+			#### Code for the improved 10 percent limit
+			# p10up = res_start * 1.1
+		 #    p10_df = smoldf[smoldf[i] > p10up]
+		 #    p10for5_lim = lim10for5samp(p10_df)
+
+		 #    if p10for5_lim == 'Did not reach limit':
+		 #        df_opens1 = smoldf[smoldf['cycle'] <= bend_max]
+		 #    else:
+		 #        df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
+			# df_opens = df_opens1[df_opens1[i] >= 100]
+			# opens_b4 = df_opens.shape[0]
+			
+			# df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
+			# shorts_b4 = df_shorts.shape[0]
+
 			res10p_lim = res_start + res_start * 0.1
 			
 				
@@ -298,7 +341,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,self.instrum_serial,bend_current_val]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,bend_max_cyc]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -330,11 +373,12 @@ class HEAT_Analysis():
 		limit_df['width'] = pd.to_numeric(limit_df['width'])
 		limit_df['radius'] = limit_df['strain_p'].str[0:1]
 		limit_df['radius'] = pd.to_numeric(limit_df['radius'])
-		limit_df['channel'] = limit_df['physical_position'].str[-1]
+		limit_df['channel'] = limit_df['physical_position'].str.extract(r'(\d+)')
 		limit_df['channel'] = pd.to_numeric(limit_df['channel'])
 
 		# save Limit df
-		limit_name =self.title + '_limits.csv'
+		limit_name = self.title + '_limits.csv'
+
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
@@ -543,6 +587,7 @@ class HEAT_Analysis():
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
 		txt_files = glob.glob('**.txt')
+		parquet_files = glob.glob('**.parquet')
 
 
 		if os.path.exists(self.dirs):
@@ -554,12 +599,21 @@ class HEAT_Analysis():
 			for files in png_files:
 				shutil.move(files,self.dirs + files)
 		except:
+			print('\n No .pngs to move!!! \n ')
 			pass
 
 		try:
 			for files in txt_files:
 				shutil.move(files,self.dirs + files)
 		except:
+			print('\n No .txts to move!!! \n ')
+			pass
+
+		try:
+			for files in parquet_files:
+				shutil.move(files,self.dirs + files)
+		except:
+			print('\n No parquets to move!!! \n ')
 			pass
 
 	def move_to_Ndrive(self):
@@ -618,14 +672,13 @@ def main():
 			else:
 				print('not an option')
 				continue
-
 			
-			prompt18 = input('\n Alloy? \n (c) Cu_RA \n (o) Cu_O2_free \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n (cs) CuSn6 \n')
+			prompt18 = input('\n Alloy? \n (c) Cu_ED \n (o) Cu_RA_O2F \n (cn) CuNi3Si \n (cz) CuZn30 \n (cc) CuCrZr \n (cm) CuMgAgP \n (cs) CuSn6 \n')
 			if prompt18 == 'c':
-				alloy = 'Cu_RA'
+				alloy = 'Cu_ED'
 				break
 			elif prompt18 == 'o':
-				alloy = 'Cu_O2_free'
+				alloy = 'Cu_RA_O2F'
 				break
 			elif prompt18 == 'cn':
 				alloy = 'CuNi3Si'
@@ -681,13 +734,6 @@ def main():
 			print('Try again there buddy')
 
 
-	while True:
-		prompt32= input('\n Benderita Serial Number? (Format "01" or "12" \n')
-		if len(prompt32) == 2:
-			h.bend_serial(prompt32)
-			break
-		else:
-			print('Try again there buddy')
 
 
 
@@ -703,6 +749,8 @@ def main():
 	h.create_limitdf(s_type,rod_d,manufacturer,alloy,c_lay,modulus)
 	h.append_limit_df_to_master()
 
+	
+	print('Plots not created since they are not being used')
 	#h.plot_bigdf_moving_average() ### Can't do this, 
 	#h.master_to_percentage_plt()
 	#h.master_v_trace_width()
