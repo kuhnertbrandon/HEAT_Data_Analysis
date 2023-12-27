@@ -79,7 +79,7 @@ class HEAT_Analysis():
 		delim_name = self.file_list[0]
 		delim_file = delim_name.split('_')
 		#self.title = delim_file[-3]
-		self.title = delim_file[-5] + '-' + delim_file[-4] + '-' + delim_file[-3]
+		self.title =  delim_file[-3]
 
 		self.dirs = self.title +'\\'
 		if os.path.exists(self.dirs):
@@ -274,15 +274,12 @@ class HEAT_Analysis():
 
 		limit_df = limit_df.reset_index(drop=True)
 
-		print(limit_df)
-
 
 		trace_df = limit_df['trace'].to_frame().reset_index(drop=True)
-		print(trace_df)
+
 		expanded_df = trace_df['trace'].str.split('_',expand=True)
 		expanded_df = expanded_df.rename(columns={0:'ground',1:'co-planar',2:'layer',3:'loop_postion'})
 
-		print(expanded_df)
 
 		def ground_tranform(row):
 			if row['ground'] == 'hg':
@@ -316,10 +313,8 @@ class HEAT_Analysis():
 
 		expanded_df['loop_position'] = expanded_df.apply(loop_tranform, axis=1)
 
-		
-		print(expanded_df)
 		limit_df = pd.concat([limit_df,expanded_df],axis=1)
-		print(limit_df)
+
 
 
 
