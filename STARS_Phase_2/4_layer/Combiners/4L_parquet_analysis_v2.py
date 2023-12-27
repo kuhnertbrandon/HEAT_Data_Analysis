@@ -190,18 +190,6 @@ class HEAT_Analysis():
 		# for files in csv_files:
 		# 	shutil.move(files,raw_dirs + files)
 
-	def move_pngs(self):
-		png_files = glob.glob('**.png')
-
-
-		if os.path.exists(self.dirs):
-			pass
-		else:
-			os.makedirs(self.dirs)
-
-
-		for files in png_files:
-			shutil.move(files,self.dirs + files)
 
 
 	def create_limitdf(self,rod_diameter,maker,encapsulation,daq_style,back,shape):
@@ -432,6 +420,7 @@ class HEAT_Analysis():
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
 		txt_files = glob.glob('**.txt')
+		parquet_files = glob.glob('**.parquet')
 
 
 		if os.path.exists(self.dirs):
@@ -443,12 +432,21 @@ class HEAT_Analysis():
 			for files in png_files:
 				shutil.move(files,self.dirs + files)
 		except:
+			print('\n No .pngs to move!!! \n ')
 			pass
 
 		try:
 			for files in txt_files:
 				shutil.move(files,self.dirs + files)
 		except:
+			print('\n No .txts to move!!! \n ')
+			pass
+
+		try:
+			for files in parquet_files:
+				shutil.move(files,self.dirs + files)
+		except:
+			print('\n No parquets to move!!! \n ')
 			pass
 
 	def move_to_Ndrive(self):
