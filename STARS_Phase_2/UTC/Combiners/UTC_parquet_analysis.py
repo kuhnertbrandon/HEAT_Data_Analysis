@@ -256,7 +256,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,coupon_type,rod_diameter,maker,material,coverlay,moduli):
 
-		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','max_cycle_for_test'] #,'opens_prior_to_lowest','shorts_prior_to_lowest']
+		limit_columns = ['serial','coupon','date','manufacturer','coverlay','modulus_gpa','alloy','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','max_cycle_for_test','opens_prior_to_lowest','shorts_prior_to_lowest']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -302,20 +302,20 @@ class HEAT_Analysis():
 			p30_df = smoldf[smoldf[i] > p30up]
 			p30for10_lim = lim30for10(p30_df)	
 
-			#### Code for the improved 10 percent limit
-			# p10up = res_start * 1.1
-		 #    p10_df = smoldf[smoldf[i] > p10up]
-		 #    p10for5_lim = lim10for5samp(p10_df)
+			### Code for the improved 10 percent limit
+			p10up = res_start * 1.1
+			p10_df = smoldf[smoldf[i] > p10up]
+			p10for5_lim = lim10for5samp(p10_df)
 
-		 #    if p10for5_lim == 'Did not reach limit':
-		 #        df_opens1 = smoldf[smoldf['cycle'] <= bend_max]
-		 #    else:
-		 #        df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
-			# df_opens = df_opens1[df_opens1[i] >= 100]
-			# opens_b4 = df_opens.shape[0]
+			if p10for5_lim == 'Did not reach limit':
+				df_opens1 = smoldf[smoldf['cycle'] <= bend_max_cyc]
+			else:
+				df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
+			df_opens = df_opens1[df_opens1[i] >= 100]
+			opens_b4 = df_opens.shape[0]
 			
-			# df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
-			# shorts_b4 = df_shorts.shape[0]
+			df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
+			shorts_b4 = df_shorts.shape[0]
 
 			res10p_lim = res_start + res_start * 0.1
 			
@@ -328,7 +328,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,bend_max_cyc]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,p10for5_lim,p30for10_lim,bend_max_cyc,opens_b4,shorts_b4]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
@@ -369,8 +369,13 @@ class HEAT_Analysis():
 		limit_df.to_csv(self.dirs + limit_name,index=False)
 		
 		self.limit_name = limit_name
+
+		## drop shorts and open column for master 
+
+		limit_df_no_stats = limit_df.drop(columns=['opens_prior_to_lowest','shorts_prior_to_lowest'])
+
 		
-		self.limit_df = limit_df
+		self.limit_df = limit_df_no_stats
 
 	def append_limit_df_to_master(self):
 		### Find master csv

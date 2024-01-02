@@ -40,6 +40,34 @@ def lim30for10(df):
 	return cycle_fail
 
 
+def lim10for5samp(df):
+	cycle_fail = None
+	in_last = None
+	for index,row in df.iterrows():
+		if in_last == None: ## Establish the index and cycle last
+			in_last = index
+			in_start = index
+	
+		track = index - in_last
+	
+		if track > 1.1:                    # See if we pull data below limit
+			in_start = index
+	
+		in_now = index            #Grab Current index
+		in_diff = in_now - in_start
+	
+		if in_diff >= 5:                 #Break if you the data has remained above for 10 cycles
+			cycle_fail = row['cycle']
+			break
+	
+		in_last = index
+	
+	if cycle_fail == None:
+		cycle_fail = 'Did not reach limit'
+	
+	return cycle_fail
+
+
 
 class HEAT_Analysis():
 	def __init__(self):
@@ -229,7 +257,7 @@ class HEAT_Analysis():
 		
 
 		bigdf = self.bigdf
-		
+		bend_max_cyc = self.bigdf['cycle'].iloc[-1]
 
 		#shrink the df
 		small_list = cycle_list + daq_list
@@ -257,6 +285,21 @@ class HEAT_Analysis():
 			p30_df = smoldf[smoldf[i] > p30up]
 			p30for10_lim = lim30for10(p30_df)	
 
+			### Code for the improved 10 percent limit
+			p10up = res_start * 1.1
+			p10_df = smoldf[smoldf[i] > p10up]
+			p10for5_lim = lim10for5samp(p10_df)
+
+			if p10for5_lim == 'Did not reach limit':
+				df_opens1 = smoldf[smoldf['cycle'] <= bend_max_cyc]
+			else:
+				df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
+			df_opens = df_opens1[df_opens1[i] >= 100]
+			opens_b4 = df_opens.shape[0]
+			
+			df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
+			shorts_b4 = df_shorts.shape[0]
+
 			res10p_lim = res_start + res_start * 0.1
 			
 				
@@ -268,7 +311,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],columns=limit_columns )
+			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,p10for5_lim,p30for10_lim]],columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
