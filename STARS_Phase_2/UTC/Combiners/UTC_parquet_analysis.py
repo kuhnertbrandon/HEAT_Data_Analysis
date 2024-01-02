@@ -314,7 +314,8 @@ class HEAT_Analysis():
 			df_opens = df_opens1[df_opens1[i] >= 100]
 			opens_b4 = df_opens.shape[0]
 			
-			df_shorts = df_opens1[df_opens1[i] <= res_start * 0.01]
+			df_shorts_inter = df_opens1[df_opens1[i] <= res_start * 0.01]
+			df_shorts = df_shorts_inter[df_shorts_inter[i] >=-105]
 			shorts_b4 = df_shorts.shape[0]
 
 			res10p_lim = res_start + res_start * 0.1
