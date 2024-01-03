@@ -66,7 +66,7 @@ def lim10for5samp(df):
 	if cycle_fail == None:
 		cycle_fail = 'Did not reach limit'
 	
-	return cycle_fail,in_now
+	return cycle_fail, in_now
 
 
 
@@ -355,7 +355,7 @@ class HEAT_Analysis():
 			# compare10p = None
 				
 			
-			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,cycle_res10p,p30for10_lim,bend_max_cyc,opens_b4,shorts_b4]],
+			row = pd.DataFrame([[title,coupon_type,date,maker,coverlay,moduli,material,self.channel_list[j],self.daq_list[j],strain,res_start,p10for5_lim,p30for10_lim,bend_max_cyc,opens_b4,shorts_b4]],
 							   columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1

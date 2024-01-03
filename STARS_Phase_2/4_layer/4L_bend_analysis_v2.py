@@ -65,7 +65,7 @@ def lim10for5samp(df):
 	if cycle_fail == None:
 		cycle_fail = 'Did not reach limit'
 	
-	return cycle_fail
+	return cycle_fail, in_now
 
 
 

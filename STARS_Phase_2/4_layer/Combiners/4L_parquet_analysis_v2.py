@@ -281,7 +281,7 @@ class HEAT_Analysis():
 			compare10p = None
 				
 			
-			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,cycle_res10p,p30for10_lim]],columns=limit_columns )
+			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,p10for5_lim,p30for10_lim]],columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
