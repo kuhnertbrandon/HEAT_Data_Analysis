@@ -94,6 +94,7 @@ class HEAT_Analysis():
 		self.dfs = None
 		self.names = None
 		self.daq_list = None
+		self.end_message = None
 
 
 	def assign_channels(self,intake_channel_list):
@@ -234,7 +235,7 @@ class HEAT_Analysis():
 
 	def create_limitdf(self,rod_diameter,maker,encapsulation,daq_style,back,shape):
 
-		limit_columns = ['serial','date','manufacturer','encapsulation','backing','shape','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','date','manufacturer','encapsulation','backing','shape','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','opens_prior_to_lowest_p','shorts_prior_to_lowest_p']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -288,31 +289,29 @@ class HEAT_Analysis():
 			### Code for the improved 10 percent limit
 			p10up = res_start * 1.1
 			p10_df = smoldf[smoldf[i] > p10up]
-			p10for5_lim = lim10for5samp(p10_df)
+			p10for5_lim,p10for5_index = lim10for5samp(p10_df)
 
 			if p10for5_lim == 'Did not reach limit':
 				df_opens1 = smoldf[smoldf['cycle'] <= bend_max_cyc]
 			else:
 				df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
 			df_opens = df_opens1[df_opens1[i] >= 100]
-			opens_b4 = df_opens.shape[0]
+			opens_b4 = df_opens.shape[0] / p10for5_index * 100
 			
 			df_shorts_inter = df_opens1[df_opens1[i] <= res_start * 0.01]
 			df_shorts = df_shorts_inter[df_shorts_inter[i] >=-105]
-			shorts_b4 = df_shorts.shape[0]
-
-			res10p_lim = res_start + res_start * 0.1
+			shorts_b4 = df_shorts.shape[0] / p10for5_index * 100
 			
 				
-			compare10p = smoldf[smoldf[i] > res10p_lim].reset_index(drop=True)
-			if len(compare10p) < 5:
-				cycle_res10p = 'Did not reach limit'
-			else:			
-				cycle_res10p = compare10p['cycle'].iloc[4]
-			compare10p = None
+			# compare10p = smoldf[smoldf[i] > res10p_lim].reset_index(drop=True)
+			# if len(compare10p) < 5:
+			# 	cycle_res10p = 'Did not reach limit'
+			# else:			
+			# 	cycle_res10p = compare10p['cycle'].iloc[4]
+			# compare10p = None
 				
 			
-			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,p10for5_lim,p30for10_lim]],columns=limit_columns )
+			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,p10for5_lim,p30for10_lim,opens_b4,shorts_b4]],columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
@@ -365,11 +364,25 @@ class HEAT_Analysis():
 		# save Limit df
 		limit_name =self.title + '_limits.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
+
+
+		flag_cutoff = 0.1
+		if (limit_df['opens_prior_to_lowest_p'] > flag_cutoff).any() == True and (limit_df['shorts_prior_to_lowest_p'] > flag_cutoff).any() == True:
+			self.end_message = ' \n Both shorts and opens occurances are higher than ' + str(flag_cutoff) + ' percentage. More investigation is needed \n'
+		elif (limit_df['opens_prior_to_lowest_p'] > flag_cutoff).any() == True:
+			self.end_message = '\n Opens occurances are higher than ' + str(flag_cutoff) + ' percentage. More investigation is needed \n'
+		elif (limit_df['shorts_prior_to_lowest_p'] > flag_cutoff).any() == True:
+			self.end_message = '\n Shorts occurances are higher than ' + str(flag_cutoff) + ' percentage. More investigation is needed \n'
+		else:
+			self.end_message = ' \n Negligible amount of anomalies detected'
 		
 		self.limit_name = limit_name
 		self.daq_list = daq_list
 		
-		self.limit_df = limit_df
+		limit_df_no_stats = limit_df.drop(columns=['opens_prior_to_lowest_p','shorts_prior_to_lowest_p'])
+
+		
+		self.limit_df = limit_df_no_stats
 
 	def append_limit_df_to_master(self):
 		### Find master csv
@@ -498,7 +511,9 @@ class HEAT_Analysis():
 
 
 	def end(self):
-		print('Finished!!')
+		print(self.end_message)
+
+		print('Finished!! \n')
 		
 		sys.exit()
 ###################################################################

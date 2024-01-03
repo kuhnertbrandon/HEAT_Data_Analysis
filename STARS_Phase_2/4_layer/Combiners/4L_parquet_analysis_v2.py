@@ -39,7 +39,32 @@ def lim30for10(df):
 
 	return cycle_fail
 
-
+def lim10for5samp(df):
+	cycle_fail = None
+	in_last = None
+	for index,row in df.iterrows():
+		if in_last == None: ## Establish the index and cycle last
+			in_last = index
+			in_start = index
+	
+		track = index - in_last
+	
+		if track > 1.1:                    # See if we pull data below limit
+			in_start = index
+	
+		in_now = index            #Grab Current index
+		in_diff = in_now - in_start
+	
+		if in_diff >= 5:                 #Break if you the data has remained above for 10 cycles
+			cycle_fail = row['cycle']
+			break
+	
+		in_last = index
+	
+	if cycle_fail == None:
+		cycle_fail = 'Did not reach limit'
+	
+	return cycle_fail
 
 class HEAT_Analysis():
 	def __init__(self):

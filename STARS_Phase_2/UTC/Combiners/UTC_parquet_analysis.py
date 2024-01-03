@@ -611,7 +611,7 @@ class HEAT_Analysis():
 
 	def move_to_Ndrive(self):
 		## Check if they have N drive mapped 
-		Ndrive_prefix = 'N:\\STARS2_test_data\\'
+		Ndrive_prefix = 'N:\\users\\Brandon\\STARS2\\'
 		if os.path.exists(Ndrive_prefix):
 			pass
 		else:
@@ -752,8 +752,8 @@ def main():
 	#h.master_v_trace_width()
 
 	h.move_pngs()
-	#h.move_to_Ndrive()
-	#h.end()
+	h.move_to_Ndrive()
+	h.end()
 					
 
 
