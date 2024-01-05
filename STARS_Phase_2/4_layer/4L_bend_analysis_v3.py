@@ -39,6 +39,7 @@ def lim30for10(df):
 
 	return cycle_fail
 
+
 def lim10for5samp(df):
 	cycle_fail = None
 	in_last = None
@@ -64,7 +65,9 @@ def lim10for5samp(df):
 	if cycle_fail == None:
 		cycle_fail = 'Did not reach limit'
 	
-	return cycle_fail
+	return cycle_fail, in_now
+
+
 
 class HEAT_Analysis():
 	def __init__(self):
@@ -91,6 +94,7 @@ class HEAT_Analysis():
 		self.dfs = None
 		self.names = None
 		self.daq_list = None
+		self.end_message = None
 
 
 	def assign_channels(self,intake_channel_list):
@@ -104,7 +108,7 @@ class HEAT_Analysis():
 		delim_name = self.file_list[0]
 		delim_file = delim_name.split('_')
 		#self.title = delim_file[-3]
-		self.title = delim_file[-6] + '-' +delim_file[-5] + '-' + delim_file[-4] +'-'+ delim_file[-3]
+		self.title =  delim_file[-3]
 
 		self.dirs = self.title +'\\'
 		if os.path.exists(self.dirs):
@@ -215,11 +219,23 @@ class HEAT_Analysis():
 		# for files in csv_files:
 		# 	shutil.move(files,raw_dirs + files)
 
+	def move_pngs(self):
+		png_files = glob.glob('**.png')
+
+
+		if os.path.exists(self.dirs):
+			pass
+		else:
+			os.makedirs(self.dirs)
+
+
+		for files in png_files:
+			shutil.move(files,self.dirs + files)
 
 
 	def create_limitdf(self,rod_diameter,maker,encapsulation,daq_style,back,shape):
 
-		limit_columns = ['serial','date','manufacturer','encapsulation','backing','shape','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles']
+		limit_columns = ['serial','date','manufacturer','encapsulation','backing','shape','trace','physical_position','strain_p','Start_ohms','10_p_increase_cycles','30_p_increase_for_10_cycles','opens_prior_to_lowest_p','shorts_prior_to_lowest_p']
 		limit_df=pd.DataFrame([],columns=limit_columns)
 
 
@@ -235,14 +251,16 @@ class HEAT_Analysis():
 			cycle_list = ['cycle']
 		elif daq_style == '16':
 			daq_list = ['daq_ch1', 'daq_ch2', 'daq_ch3', 'daq_ch4', 'daq_ch5', 'daq_ch6', 'daq_ch7', 'daq_ch8', 'daq_ch9', 'daq_ch10', 'daq_ch11', 'daq_ch12', 'daq_ch13', 'daq_ch14', 'daq_ch15', 'daq_ch16']
-			sample_list = ['hg_s_l3_l','hg_s_l3_r','sg_s_l3_l','sg_s_l3_r','hg_s_l2_l','hg_s_l2_r','sg_s_l2_l','sg_s_l2_r','hg_c_l3_l','hg_c_l3_r','sg_c_l3_l','sg_c_l3_r','hg_c_l2_l','hg_c_l2_r','sg_c_l2_l','sg_c_l2_r']
+			sample_list = ['hg_s_l3_l', 'sg_s_l3_l', 'hg_s_l2_l', 'sg_s_l2_l', 'hg_c_l3_l', 'sg_c_l3_l', 'hg_c_l2_l', 'sg_c_l2_l', 'hg_s_l3_r', 'sg_s_l3_r', 'hg_s_l2_r', 'sg_s_l2_r', 'hg_c_l3_r', 'sg_c_l3_r', 'hg_c_l2_r', 'sg_c_l2_r']
+			# Improper map from v2
+			#sample_list = ['hg_s_l3_l','hg_s_l3_r','sg_s_l3_l','sg_s_l3_r','hg_s_l2_l','hg_s_l2_r','sg_s_l2_l','sg_s_l2_r','hg_c_l3_l','hg_c_l3_r','sg_c_l3_l','sg_c_l3_r','hg_c_l2_l','hg_c_l2_r','sg_c_l2_l','sg_c_l2_r']
 			cycle_list = ['cycle']
 		else:
 			print('daq number not reqcognized')
 		
 
 		bigdf = self.bigdf
-		
+		bend_max_cyc = self.bigdf['cycle'].iloc[-1]
 
 		#shrink the df
 		small_list = cycle_list + daq_list
@@ -270,18 +288,32 @@ class HEAT_Analysis():
 			p30_df = smoldf[smoldf[i] > p30up]
 			p30for10_lim = lim30for10(p30_df)	
 
-			res10p_lim = res_start + res_start * 0.1
+			### Code for the improved 10 percent limit
+			p10up = res_start * 1.1
+			p10_df = smoldf[smoldf[i] > p10up]
+			p10for5_lim,p10for5_index = lim10for5samp(p10_df)
+
+			if p10for5_lim == 'Did not reach limit':
+				df_opens1 = smoldf[smoldf['cycle'] <= bend_max_cyc]
+			else:
+				df_opens1 = smoldf[smoldf['cycle'] <= p10for5_lim]  
+			df_opens = df_opens1[df_opens1[i] >= 100]
+			opens_b4 = df_opens.shape[0] / p10for5_index * 100
+			
+			df_shorts_inter = df_opens1[df_opens1[i] <= res_start * 0.01]
+			df_shorts = df_shorts_inter[df_shorts_inter[i] >=-105]
+			shorts_b4 = df_shorts.shape[0] / p10for5_index * 100
 			
 				
-			compare10p = smoldf[smoldf[i] > res10p_lim].reset_index(drop=True)
-			if len(compare10p) < 5:
-				cycle_res10p = 'Did not reach limit'
-			else:			
-				cycle_res10p = compare10p['cycle'].iloc[4]
-			compare10p = None
+			# compare10p = smoldf[smoldf[i] > res10p_lim].reset_index(drop=True)
+			# if len(compare10p) < 5:
+			# 	cycle_res10p = 'Did not reach limit'
+			# else:			
+			# 	cycle_res10p = compare10p['cycle'].iloc[4]
+			# compare10p = None
 				
 			
-			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,p10for5_lim,p30for10_lim]],columns=limit_columns )
+			row = pd.DataFrame([[title,date,maker,encapsulation,back,shape,sample_list[j],daq_list[j],strain,res_start,p10for5_lim,p30for10_lim,opens_b4,shorts_b4]],columns=limit_columns )
 			limit_df = pd.concat([limit_df,row]) #limit_df.append(row)
 			j = j + 1
 
@@ -289,6 +321,7 @@ class HEAT_Analysis():
 
 
 		trace_df = limit_df['trace'].to_frame().reset_index(drop=True)
+
 		expanded_df = trace_df['trace'].str.split('_',expand=True)
 		expanded_df = expanded_df.rename(columns={0:'ground',1:'co-planar',2:'layer',3:'loop_postion'})
 
@@ -325,19 +358,33 @@ class HEAT_Analysis():
 
 		expanded_df['loop_position'] = expanded_df.apply(loop_tranform, axis=1)
 
-		
 		limit_df = pd.concat([limit_df,expanded_df],axis=1)
+
 
 
 
 		# save Limit df
 		limit_name =self.title + '_limits.csv'
 		limit_df.to_csv(self.dirs + limit_name,index=False)
+
+
+		flag_cutoff = 0.1
+		if (limit_df['opens_prior_to_lowest_p'] > flag_cutoff).any() == True and (limit_df['shorts_prior_to_lowest_p'] > flag_cutoff).any() == True:
+			self.end_message = ' \n Both shorts and opens occurances are higher than ' + str(flag_cutoff) + ' percentage. More investigation is needed \n'
+		elif (limit_df['opens_prior_to_lowest_p'] > flag_cutoff).any() == True:
+			self.end_message = '\n Opens occurances are higher than ' + str(flag_cutoff) + ' percentage. More investigation is needed \n'
+		elif (limit_df['shorts_prior_to_lowest_p'] > flag_cutoff).any() == True:
+			self.end_message = '\n Shorts occurances are higher than ' + str(flag_cutoff) + ' percentage. More investigation is needed \n'
+		else:
+			self.end_message = ' \n Negligible amount of anomalies detected'
 		
 		self.limit_name = limit_name
 		self.daq_list = daq_list
 		
-		self.limit_df = limit_df
+		limit_df_no_stats = limit_df.drop(columns=['opens_prior_to_lowest_p','shorts_prior_to_lowest_p'])
+
+		
+		self.limit_df = limit_df_no_stats
 
 	def append_limit_df_to_master(self):
 		### Find master csv
@@ -414,26 +461,7 @@ class HEAT_Analysis():
 		print('\n Raw cycle plot created')
 
 
-	def read_parquet_file(self,parquet_file):
-		dfp=pd.read_parquet(parquet_file)
-		self.bigdf = dfp 
-		self.title = parquet_file[0:18] # Morteza wants 14
-		print(self.title)
-		self.dirs = self.title +'\\'
-		
 
-		self.dirs = self.title +'\\'
-		if os.path.exists(self.dirs):
-			pass
-		else:
-			os.makedirs(self.dirs)
-		# 	try:
-		# 		shutil.move(parquet_file,self.dirs + parquet_file)
-		# 	except:
-		# 		print('Could not move parquet file!!!')
-
-
-		return self.title,self.indicator
 
 
 
@@ -445,7 +473,6 @@ class HEAT_Analysis():
 	def move_pngs(self):
 		png_files = glob.glob('**.png')
 		txt_files = glob.glob('**.txt')
-		parquet_files = glob.glob('**.parquet')
 
 
 		if os.path.exists(self.dirs):
@@ -457,21 +484,12 @@ class HEAT_Analysis():
 			for files in png_files:
 				shutil.move(files,self.dirs + files)
 		except:
-			print('\n No .pngs to move!!! \n ')
 			pass
 
 		try:
 			for files in txt_files:
 				shutil.move(files,self.dirs + files)
 		except:
-			print('\n No .txts to move!!! \n ')
-			pass
-
-		try:
-			for files in parquet_files:
-				shutil.move(files,self.dirs + files)
-		except:
-			print('\n No parquets to move!!! \n ')
 			pass
 
 	def move_to_Ndrive(self):
@@ -495,7 +513,9 @@ class HEAT_Analysis():
 
 
 	def end(self):
-		print('Finished!!')
+		print(self.end_message)
+
+		print('Finished!! \n')
 		
 		sys.exit()
 ###################################################################
@@ -505,11 +525,7 @@ def main():
 
 	h = HEAT_Analysis()
 	print('\n Input the answer in the parenthesis \n')
-	#h.glob_search_csv()
-	glob_par = glob.glob('**.parquet')
-	#h.create_bigdf_new()
-	#h.save_df_to_parquet()
-	h.read_parquet_file(glob_par[0])
+	h.glob_search_csv()
 
 
 	while True:
@@ -586,8 +602,8 @@ def main():
 
 	### Run standard functions
 	#h.find_first_row()
-	#h.create_bigdf_new()
-	#h.save_df_to_parquet()
+	h.create_bigdf_new()
+	h.save_df_to_parquet()
 
 	# Create and append limit	
 	h.create_limitdf(rod_d,manufacturer,encap,daq_number,backplane,shape)
