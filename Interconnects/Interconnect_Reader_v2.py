@@ -662,9 +662,12 @@ def main():
 			print('enter 3 or 9')
 
 	while True:
-		prompt2 = input('\n Encapsulatation Material? (n) to skip   ')
+		prompt2 = input('\n Encapsulatation Material? (s) for Silicone (n) to skip   ')
 		if prompt2 == 'n':
 			encap = 'N/A'
+			break
+		elif prompt2 == 's':
+			encap = 'Silicone'
 			break
 		else:
 			encap = prompt2
@@ -677,6 +680,15 @@ def main():
 			break
 		else:
 			uf = prompt3
+			break
+
+	while True:
+		prompt4 = input('\n Solder Material? (n) to skip   ')
+		if prompt4 == 'n':
+			solder = 'N/A'
+			break
+		else:
+			solder = prompt3
 			break
 
 
