@@ -235,7 +235,8 @@ class HEAT_Analysis():
 			cycle_list = ['cycle']
 		elif daq_style == '16':
 			daq_list = ['daq_ch1', 'daq_ch2', 'daq_ch3', 'daq_ch4', 'daq_ch5', 'daq_ch6', 'daq_ch7', 'daq_ch8', 'daq_ch9', 'daq_ch10', 'daq_ch11', 'daq_ch12', 'daq_ch13', 'daq_ch14', 'daq_ch15', 'daq_ch16']
-			sample_list = ['hg_s_l3_l', 'sg_s_l3_l', 'hg_s_l2_l', 'sg_s_l2_l', 'hg_c_l3_l', 'sg_c_l3_l', 'hg_c_l2_l', 'sg_c_l2_l', 'hg_s_l3_r', 'sg_s_l3_r', 'hg_s_l2_r', 'sg_s_l2_r', 'hg_c_l3_r', 'sg_c_l3_r', 'hg_c_l2_r', 'sg_c_l2_r']
+			sample_list = ['hg_s_l3_l', 'sg_s_l3_l', 'hg_s_l2_l', 'sg_s_l2_l', 'hg_c_l3_r', 'sg_c_l3_r', 'hg_c_l2_r', 'sg_c_l2_r', 'hg_s_l3_r', 'sg_s_l3_r', 'hg_s_l2_r', 'sg_s_l2_r', 'hg_c_l3_l', 'sg_c_l3_l', 'hg_c_l2_l', 'sg_c_l2_l']
+			
 			# Improper map from v2
 			#sample_list = ['hg_s_l3_l','hg_s_l3_r','sg_s_l3_l','sg_s_l3_r','hg_s_l2_l','hg_s_l2_r','sg_s_l2_l','sg_s_l2_r','hg_c_l3_l','hg_c_l3_r','sg_c_l3_l','sg_c_l3_r','hg_c_l2_l','hg_c_l2_r','sg_c_l2_l','sg_c_l2_r']
 			cycle_list = ['cycle']
